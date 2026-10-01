@@ -25,7 +25,7 @@
   padding-bottom:env(safe-area-inset-bottom,0px);
   color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="rose"]){
   --page:#000000; --page-alt:#101012; --tile:#1C1C1E; --tile-alt:#1C1C1E;
   --text:#F5F5F7; --text2:#A1A1A6; --text3:#86868B;
   --line:#424245; --hair:rgba(255,255,255,.1);
@@ -72,7 +72,7 @@ svg{display:block}
 .glinks a{position:relative;z-index:1}
 .glinks a.on{color:var(--text)}
 .gind{position:absolute;left:0;top:50%;height:30px;margin-top:-15px;border-radius:980px;background:var(--chip);z-index:0;pointer-events:none;transition:transform .45s var(--e),width .45s var(--e),opacity .25s}
-.gstat{display:flex;align-items:center;min-width:20px;justify-content:flex-end}
+.gstat{display:flex;align-items:center;gap:10px;min-width:20px;justify-content:flex-end}
 .gstat .live{font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px}
 .gstat .live::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
 .synced svg{width:17px;height:17px;color:var(--text3)}
@@ -81,7 +81,7 @@ svg{display:block}
 
 /* ---------- type ---------- */
 .eyebrow{font-size:19px;font-weight:700;letter-spacing:-.005em;color:#BF4800;margin-bottom:10px}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .eyebrow{color:#FF9F0A}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="rose"]) .eyebrow{color:#FF9F0A}}
 .display{word-spacing:.02em;font-size:clamp(44px,7.4vw,80px);font-weight:700;line-height:1.04;letter-spacing:-.04em;margin:0}
 .lede{font-size:clamp(19px,2.2vw,24px);line-height:1.42;letter-spacing:-.012em;color:var(--text2);max-width:30em;margin-top:22px}
 .h2{word-spacing:.02em;font-size:clamp(36px,5.2vw,56px);font-weight:700;line-height:1.06;letter-spacing:-.035em;margin:0}
@@ -328,7 +328,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 
 /* ---------- Notes (Apple Notes) ---------- */
 :root{--nt:#E4A40C;--nt-ink:#9A6A00;--nt-soft:rgba(228,164,12,.14);--npaper:#FFFFFF}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--nt:#FFD60A;--nt-ink:#FFD60A;--nt-soft:rgba(255,214,10,.16);--npaper:#1C1C1E}}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="rose"]){--nt:#FFD60A;--nt-ink:#FFD60A;--nt-soft:rgba(255,214,10,.16);--npaper:#1C1C1E}}
 :root[data-theme="dark"]{--nt:#FFD60A;--nt-ink:#FFD60A;--nt-soft:rgba(255,214,10,.16);--npaper:#1C1C1E}
 .trow.has-nbtn{padding-right:70px}
 .nbtn{position:absolute;right:20px;top:16px;width:36px;height:36px;border-radius:50%;border:0;background:transparent;color:var(--text3);display:grid;place-items:center;transition:background .2s,color .2s,transform .12s var(--e)}
@@ -472,8 +472,59 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
 @media (max-width:640px){.mapbox{height:62vh;min-height:320px}}
 @media (prefers-reduced-transparency:reduce){.maphint,.mapfull{background:#fff;backdrop-filter:none}}
 
+/* ================= Thème Préventica (clair, accents rose) ================= */
+:root[data-theme="rose"]{
+  --page:#FFFFFF; --page-alt:#FBF3F7; --tile:#FAF1F6; --tile-alt:#FFFFFF;
+  --text:#1B2A47; --text2:#5B6780; --text3:#8A92A6;
+  --line:#E7D6E0; --hair:rgba(29,56,97,.10);
+  --blue:#CD3B86; --blue-h:#B52E73; --link:#BE2F78; --focus:rgba(205,59,134,.30);
+  --chip:#F6E8F0; --chip-on:#1D3861; --chip-on-t:#FFFFFF;
+  --nav:rgba(255,255,255,.76); --thumb:#FFFFFF; --thumb-sh:0 1px 2px rgba(29,56,97,.10),0 3px 10px rgba(205,59,134,.16);
+  --green:#1E8E3E; --red:#D70015;
+  --nt:#CD3B86; --nt-ink:#AE2C6D; --nt-soft:rgba(205,59,134,.12); --npaper:#FFFFFF;
+  color-scheme:light;
+}
+:root[data-theme="rose"] .eyebrow{color:#CD3B86}
+:root[data-theme="dark"] .eyebrow{color:#FF9F0A}
+:root[data-theme="rose"] .ln:nth-child(2)>span{color:#CD3B86}
+:root[data-theme="rose"] .stat{background:linear-gradient(160deg,#FFFFFF 0%,#FAF1F6 100%);box-shadow:0 0 0 1px rgba(205,59,134,.12)}
+:root[data-theme="rose"] .statnum{color:#1D3861}
+:root[data-theme="rose"] .sec.alt .xtile,:root[data-theme="rose"] .sec.alt .tile{box-shadow:0 0 0 1px var(--hair)}
+:root[data-theme="rose"] .pill:hover{box-shadow:0 10px 24px -10px rgba(205,59,134,.65)}
+:root[data-theme="rose"] .gaplbl{color:#1E8E3E}
+:root[data-theme="rose"] .gind{background:var(--chip)}
+:root[data-theme="rose"] .target svg{color:#CD3B86}
+
+/* sélecteur de thème */
+.thm{position:relative}
+.thbtn{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;border:0;background:transparent;padding:0;transition:transform .15s var(--e)}
+.thbtn:active{transform:scale(.9)}
+.sw{display:block;width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}
+.thpop{position:absolute;right:0;top:calc(100% + 8px);z-index:60;min-width:210px;padding:6px;border-radius:16px;background:var(--page);
+  box-shadow:0 0 0 1px var(--hair),0 22px 50px -16px rgba(0,0,0,.32);transform-origin:top right;animation:thIn .26s var(--e)}
+@keyframes thIn{from{opacity:0;transform:scale(.92) translateY(-4px)}to{opacity:1;transform:none}}
+.thpop button{display:flex;align-items:center;gap:11px;width:100%;border:0;background:none;padding:10px 12px;border-radius:10px;font-size:15px;text-align:left;color:var(--text)}
+.thpop button:hover{background:var(--chip)}
+.thpop button svg{width:15px;height:15px;margin-left:auto;color:var(--blue)}
+.thpop .thlbl{font-size:12px;color:var(--text3);padding:6px 12px 4px}
+html.theming,html.theming *{transition:background-color .45s ease,color .45s ease,border-color .45s ease,box-shadow .45s ease!important}
+@media (prefers-reduced-motion:reduce){html.theming,html.theming *{transition:none!important}}
+
+:root[data-theme="rose"] .hero{background:radial-gradient(1100px 520px at 90% -10%,rgba(205,59,134,.10),transparent 62%),radial-gradient(760px 420px at -12% 112%,rgba(29,56,97,.05),transparent 60%)}
+:root[data-theme="rose"] .nowcard{background:linear-gradient(160deg,#FFFFFF,#FAF1F6);box-shadow:0 0 0 1px rgba(205,59,134,.14)}
+:root[data-theme="rose"] .glinks a.on{color:#B52E73}
+:root[data-theme="rose"] .bar span{background:linear-gradient(90deg,#CD3B86,#E063A3)}
+:root[data-theme="rose"] .foot{background:#FBF3F7}
+:root[data-theme="rose"] ::selection{background:rgba(205,59,134,.22)}
+@media (max-width:480px){.thm{display:none}}
+.appear{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--hair)}
+.appear>span{font-size:13px;font-weight:600;color:var(--text2)}
+.appear .seg{min-width:min(100%,380px)}
+.appear .seg button{padding:8px 10px}
+
 </style>
-<script>try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("js-anim")}catch(e){}</script>
+<script>(function(){var d=document.documentElement;try{var t=localStorage.getItem("preventica-theme")||"rose";if(t!=="auto")d.setAttribute("data-theme",t)}catch(e){d.setAttribute("data-theme","rose")}try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("js-anim")}catch(e){}})();</script>
+<meta name="theme-color" content="#FFFFFF">
 </head>
 <body>
 <div id="root"></div>
@@ -1446,8 +1497,33 @@ function Empty({icon,title,text,action}){
   return <div className="empty"><span className="empty-ic"><Icon n={icon}/></span><h3>{title}</h3><p>{text}</p>{action}</div>;
 }
 
+
+const THK='preventica-theme';
+const THEMES=[['rose','Préventica','conic-gradient(#CD3B86 0 50%,#FFFFFF 50% 100%)'],['light','Clair','#0071E3'],['dark','Sombre','#1C1C1E'],['auto','Automatique','linear-gradient(135deg,#FFFFFF 50%,#1C1C1E 50%)']];
+const THEME_META={rose:'#FFFFFF',light:'#FFFFFF',dark:'#000000'};
+function useThemeState(){
+  const [th,setTh]=useState(()=>{try{return localStorage.getItem(THK)||'rose'}catch(e){return 'rose'}});
+  const first=useRef(true);
+  useEffect(()=>{const r=document.documentElement;
+    if(!first.current&&RMOK()){r.classList.add('theming');setTimeout(()=>r.classList.remove('theming'),520)}first.current=false;
+    if(th==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',th);
+    try{localStorage.setItem(THK,th)}catch(e){}
+    const m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',THEME_META[th]||(matchMedia('(prefers-color-scheme: dark)').matches?'#000000':'#FFFFFF'))},[th]);
+  return [th,setTh];
+}
+function ThemeMenu({th,setTh}){
+  const [open,setOpen]=useState(false);
+  useEffect(()=>{if(!open)return;const f=e=>{if(!e.target.closest('.thm'))setOpen(false)};const k=e=>{if(e.key==='Escape')setOpen(false)};
+    document.addEventListener('pointerdown',f);document.addEventListener('keydown',k);return()=>{document.removeEventListener('pointerdown',f);document.removeEventListener('keydown',k)}},[open]);
+  const cur=THEMES.find(t=>t[0]===th)||THEMES[0];
+  return <div className="thm">
+    <button className="thbtn" aria-label={'Thème : '+cur[1]} aria-haspopup="menu" aria-expanded={open} onClick={()=>setOpen(!open)}><span className="sw" style={{background:cur[2]}}/></button>
+    {open&&<div className="thpop" role="menu"><div className="thlbl">Thème</div>{THEMES.map(([k,l,c])=><button key={k} role="menuitemradio" aria-checked={th===k} onClick={()=>{setTh(k);setOpen(false)}}><span className="sw" style={{background:c}}/>{l}{th===k&&<Icon n="check"/>}</button>)}</div>}
+  </div>;
+}
+
 /* ---------- nav ---------- */
-function Nav({active,scrolled,isToday,clk,sync}){
+function Nav({active,scrolled,isToday,clk,sync,th,setTh}){
   const linksRef=useRef(null);const [ind,setInd]=useState(null);
   const measure=useCallback(()=>{const b=linksRef.current;const a=b&&b.querySelector('a.on');setInd(a?{x:a.offsetLeft,w:a.offsetWidth}:null)},[]);
   useLayoutEffect(()=>{measure()},[active,measure]);
@@ -1456,7 +1532,7 @@ function Nav({active,scrolled,isToday,clk,sync}){
     <div className="gwrap gnav-in">
       <a href="#top" className="wordmark" onClick={e=>{e.preventDefault();window.scrollTo({top:0,behavior:RMOK()?'smooth':'auto'})}}>Préventica<span> Lyon 2026</span></a>
       <div className="glinks" ref={linksRef}><span className="gind" style={ind?{transform:'translateX('+ind.x+'px)',width:ind.w,opacity:1}:{opacity:0}} aria-hidden="true"/>{SECTIONS.map(([id,l])=><a key={id} href={'#'+id} className={active===id?'on':''} aria-current={active===id?'true':undefined} onClick={e=>{e.preventDefault();go(id)}}>{l}</a>)}</div>
-      <div className="gstat">{isToday?<span className="live num">{clk}</span>:sync==='cloud'?<span className="synced" title="Synchronisé entre tes appareils"><Icon n="cloud"/></span>:null}</div>
+      <div className="gstat"><ThemeMenu th={th} setTh={setTh}/>{isToday?<span className="live num">{clk}</span>:sync==='cloud'?<span className="synced" title="Synchronisé entre tes appareils"><Icon n="cloud"/></span>:null}</div>
     </div>
   </nav>;
 }
@@ -2039,6 +2115,7 @@ function App(){
   const [now,setNow]=useState(Date.now());
   const [active,setActive]=useState('');
   const [scrolled,setScrolled]=useState(false);
+  const [th,setTh]=useThemeState();
   const refDoc=useRef(null),dirty=useRef(false),chain=useRef(Promise.resolve()),stateRef=useRef(state);
   stateRef.current=state;
   useEffect(()=>{const t=setInterval(()=>setNow(Date.now()),30000);return()=>clearInterval(t)},[]);
@@ -2075,7 +2152,7 @@ function App(){
   const saveMemo=useCallback((key,blocks,t)=>update(s=>{const memos={...(s.memos||{})};if(blocks.some(b=>b.text.trim()))memos[key]={blocks,updatedAt:t};else delete memos[key];return {...s,memos}}),[update]);
   const isToday=!!DAYS.find(d=>d.date===todayISO());const d=new Date(now);const clk=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
   return <>
-    <Nav active={active} scrolled={scrolled} isToday={isToday} clk={clk} sync={sync}/>
+    <Nav active={active} scrolled={scrolled} isToday={isToday} clk={clk} sync={sync} th={th} setTh={setTh}/>
     <main>
       <Hero state={state} now={now} openPlan={openPlan} openNote={openNote}/>
       <Planning state={state} day={day} setDay={setDay} update={update} toggleSel={toggleSel} openRdv={openRdv} openPlan={openPlan} now={now} openReport={()=>setDlg({type:'report'})} openExport={()=>setDlg({type:'export'})} openNote={openNote}/>
@@ -2084,6 +2161,7 @@ function App(){
       <Plan target={planTarget} setTarget={setPlanTarget}/>
     </main>
     <footer className="foot"><div className="gwrap">
+      <div className="appear"><span>Apparence</span><Seg label="Thème" value={th} onChange={setTh} options={[['rose','Préventica'],['light','Clair'],['dark','Sombre'],['auto','Auto']]}/></div>
       <p>Programme et plan issus des documents officiels Préventica Lyon 2026, version de septembre. Un changement de dernière minute n'y figure pas.</p>
       <p>{sync==='cloud'?'Tes données sont synchronisées entre tes appareils.':sync==='error'?'Synchronisation en pause, tes données restent enregistrées sur cet appareil.':'Tes données sont enregistrées sur cet appareil.'}</p>
     </div></footer>
