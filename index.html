@@ -522,6 +522,12 @@ html.theming,html.theming *{transition:background-color .45s ease,color .45s eas
 .appear .seg{min-width:min(100%,380px)}
 .appear .seg button{padding:8px 10px}
 
+.exfallback{margin-top:16px;background:var(--page-alt);border-radius:14px;padding:14px 16px;font-size:14px;color:var(--text2);line-height:1.45}
+.exfallback b{color:var(--text)}
+.exfallback ul{list-style:none;margin:10px 0 0;padding:0;max-height:240px;overflow:auto}
+.exfallback li{display:grid;grid-template-columns:82px 1fr auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--hair)}
+.exf-t{color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 </style>
 <script>(function(){var d=document.documentElement;try{var t=localStorage.getItem("preventica-theme")||"rose";if(t!=="auto")d.setAttribute("data-theme",t)}catch(e){d.setAttribute("data-theme","rose")}try{if(!matchMedia("(prefers-reduced-motion: reduce)").matches)d.classList.add("js-anim")}catch(e){}})();</script>
 <meta name="theme-color" content="#FFFFFF">
@@ -2075,6 +2081,22 @@ function zipOne(name,text){
   const eo=new DataView(new ArrayBuffer(22));[[0,0x06054b50,4],[4,0,2],[6,0,2],[8,1,2],[10,1,2],[12,cdSize,4],[16,cdOff,4],[20,0,2]].forEach(([o,v,s])=>s===4?eo.setUint32(o,v,true):eo.setUint16(o,v,true));
   return new Blob([lh.buffer,fn,data,ch.buffer,fn,eo.buffer]);
 }
+
+function gcalEvents(state,o){
+  const out=[];
+  DAYS.forEach(d=>dayItems(state,d.n).forEach(it=>{
+    const lunch=it.kind==='rdv'&&isLunch(it.title);
+    if(it.kind==='conf'&&!o.conf)return; if(it.kind==='rdv'&&!lunch&&!o.rdv)return; if(lunch&&!o.lunch)return;
+    const title=it.kind==='conf'?it.title:lunch?'Pause déjeuner':'RDV · '+nice(it.title);
+    const loc='Eurexpo Lyon · '+(it.kind==='conf'?ROOMS[it.room].n:(it.stand?'Stand '+it.stand:''));
+    const notes=memoText((state.memos||{})[memoKey(it)]);
+    const details=[it.kind==='conf'?'Conférence · '+it.org:lunch?'':'Rendez-vous exposant',notes].filter(Boolean).join('\n');
+    const url='https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent(title)+'&dates='+icsTime(d.n,it.start)+'/'+icsTime(d.n,it.end)+'&location='+encodeURIComponent(loc)+(details?'&details='+encodeURIComponent(details):'')+'&ctz=Europe/Paris';
+    out.push({key:d.n+it.id,day:d.n,start:it.start,title,url});
+  }));
+  return out;
+}
+
 function ExportDialog({state,onClose}){
   const [o,setO]=useState({conf:true,rdv:true,lunch:false,alarm:true});
   const [dl,setDl]=useState(undefined);const [msg,setMsg]=useState('');const [busy,setBusy]=useState(false);
@@ -2099,8 +2121,12 @@ function ExportDialog({state,onClose}){
       <p><b>Google Agenda</b> : Paramètres, Importer et exporter, puis choisis le fichier .ics.</p>
     </div>
     <p className="hint" style={{marginTop:12}}>Conseil : importe dans un calendrier dédié « Préventica ». Si ton planning change, tu le supprimes et tu réimportes.</p>
-    <div className="dactions"><span className="muted sm">{dl===null?'Export indisponible dans cette vue.':msg}</span>
-      <button className="pill" disabled={!dl||busy||!res.count} onClick={go}><Icon n="cal"/>Télécharger</button></div>
+    {dl===null&&<div className="exfallback">
+      <p><b>Le téléchargement n'est pas disponible dans cet écran.</b> Ouvre le site depuis son lien dans Safari ou Chrome pour récupérer le fichier, ou ajoute tes événements à Google Agenda un par un :</p>
+      <ul>{gcalEvents(state,o).map(ev=><li key={ev.key}><span className="num muted">{DAYS[ev.day-1].label} {ev.start}</span><span className="exf-t">{ev.title}</span><a className="link sm" href={ev.url} target="_blank" rel="noopener noreferrer">Ajouter<Icon n="chev"/></a></li>)}</ul>
+    </div>}
+    <div className="dactions"><span className="muted sm">{dl===undefined?'Préparation…':msg}</span>
+      {dl!==null&&<button className="pill" disabled={!dl||busy||!res.count} onClick={go}><Icon n="cal"/>Télécharger</button>}</div>
   </>}</Dialog>;
 }
 
