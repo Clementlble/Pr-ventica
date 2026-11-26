@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Swipe Black Friday</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: rapide, ludique, sans bla-bla, comme une app qu'on a dans la poche
+IDEA: un portant de soldes qu'on fait défiler pièce par pièce
+PICTURE: la carte produit, grande, au centre ; la pile derrière
+COLOUR: nuit #0f0f10, carte blanche, accent rouge étiquette soldes #ff3b2f, vert like #1fc77a
+TYPE: Archivo 900 pour prix et titres, Archivo 500 pour le reste
+*/
+:root{--bg:#0f0f10;--ink:#f4f2ee;--mut:#9a9893;--card:#1b1b1d;--red:#ff3b2f;--ok:#1fc77a;--line:#2a2a2d}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 Archivo,system-ui,sans-serif;overflow-x:clip;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+.app{max-width:520px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;padding:14px 16px 18px}
+header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+h1{font-size:22px;font-weight:900;margin:0;letter-spacing:-.02em}
+.likesbtn{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:9px 14px;display:flex;gap:8px;align-items:center;min-height:44px}
+.likesbtn b{color:var(--ok)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 8px}
+.chip{border:1px solid var(--line);background:transparent;border-radius:999px;padding:7px 12px;font-size:14px;min-height:36px;color:var(--mut)}
+.chip.on{background:var(--ink);color:#111;border-color:var(--ink);font-weight:700}
+.prog{height:4px;background:var(--line);border-radius:4px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--red);width:0;transition:width .2s}
+.meta{display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin:6px 0 10px}
+.stage{position:relative;flex:1;min-height:440px;touch-action:pan-y}
+.card{position:absolute;inset:0;border-radius:22px;overflow:hidden;background:var(--card);box-shadow:0 18px 40px rgba(0,0,0,.45);user-select:none;-webkit-user-select:none;will-change:transform}
+.card.back{transform:scale(.95) translateY(14px);opacity:.6}
+.card img{width:100%;height:100%;object-fit:cover;display:block;background:#e9e7e3;pointer-events:none}
+.card .info{position:absolute;left:0;right:0;bottom:0;padding:60px 18px 18px;background:linear-gradient(transparent,rgba(0,0,0,.85) 45%)}
+.brand{display:inline-block;font-size:12px;font-weight:700;background:rgba(255,255,255,.16);backdrop-filter:blur(6px);padding:4px 9px;border-radius:999px}
+.name{font-size:21px;font-weight:700;line-height:1.15;margin:8px 0 6px;text-wrap:balance}
+.price{display:flex;align-items:baseline;gap:10px;white-space:nowrap}
+.price b{font-size:30px;font-weight:900}
+.price s{color:#c9c6c0}
+.price em{font-style:normal;background:var(--red);font-weight:900;font-size:14px;padding:3px 8px;border-radius:6px}
+.stamp{position:absolute;top:24px;font-size:30px;font-weight:900;padding:4px 14px;border:4px solid;border-radius:10px;opacity:0;transform:rotate(-14deg)}
+.stamp.like{left:20px;color:var(--ok)}
+.stamp.nope{right:20px;color:var(--red);transform:rotate(14deg)}
+.open{position:absolute;top:14px;right:14px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);display:grid;place-items:center;color:#fff;text-decoration:none;font-weight:900}
+.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;border:1px dashed var(--line);border-radius:22px;color:var(--mut)}
+.empty b{display:block;color:var(--ink);font-size:24px;margin-bottom:8px}
+.actions{display:flex;justify-content:center;align-items:center;gap:22px;margin-top:16px}
+.act{width:68px;height:68px;border-radius:50%;border:2px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:28px;font-weight:900;transition:transform .1s}
+.act:active{transform:scale(.92)}
+.act.no{color:var(--red)}.act.yes{color:var(--ok)}
+.act.undo{width:48px;height:48px;font-size:18px;color:var(--mut)}
+.hint{text-align:center;color:var(--mut);font-size:13px;margin-top:10px}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;z-index:9}
+.sheet.on{display:block}
+.panel{position:absolute;left:0;right:0;bottom:0;max-height:88%;overflow:auto;background:#161617;border-radius:22px 22px 0 0;padding:18px 16px 28px;max-width:560px;margin:0 auto}
+.panel h2{margin:0 0 4px;font-size:22px;font-weight:900}
+.tot{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 6px}
+.tot b{font-size:30px;font-weight:900;white-space:nowrap}
+.bud{height:8px;background:var(--line);border-radius:8px;overflow:hidden;margin-bottom:4px}
+.bud i{display:block;height:100%;background:var(--ok)}
+.bud.over i{background:var(--red)}
+.budtxt{color:var(--mut);font-size:13px;margin-bottom:14px}
+.row{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.row img{width:64px;height:80px;object-fit:cover;border-radius:10px;background:#e9e7e3}
+.row a{color:var(--ink);text-decoration:none;font-weight:700;line-height:1.2}
+.row small{display:block;color:var(--mut);font-weight:500}
+.row .p{text-align:right;white-space:nowrap;font-weight:900}
+.row .p button{display:block;margin:6px 0 0 auto;border:0;background:none;color:var(--mut);font-size:13px;padding:4px 0}
+.close{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:10px 16px;min-height:44px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btns button{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 14px;min-height:44px}
+.note{color:var(--mut);font-size:12px;margin-top:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:transparent;border-radius:999px;padding:9px 14px;min-height:44px;color:var(--mut);font-weight:700}
+.tab.on{background:var(--ink);color:#111;border-color:var(--ink)}
+.cta{display:block;width:100%;margin:6px 0 10px;border:0;border-radius:14px;padding:14px;min-height:50px;background:var(--ok);color:#06140d;font-weight:900;font-size:16px}
+.cta[hidden]{display:none}
+.mode{display:none;align-items:center;justify-content:space-between;gap:10px;background:#1d2a22;border:1px solid #2d4436;border-radius:14px;padding:10px 12px;margin:10px 0 6px;font-size:14px}
+.mode.on{display:flex}
+.mode button{border:1px solid #2d4436;background:transparent;border-radius:999px;padding:8px 12px;min-height:40px}
+.sec{margin:18px 0 8px;font-size:17px;font-weight:900}
+.sub{color:var(--mut);font-size:13px;margin:-4px 0 8px}
+.sc{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:6px}
+.pk{flex:none;width:92px;scroll-snap-align:start;border:2px solid transparent;border-radius:12px;background:var(--card);padding:0;overflow:hidden;text-align:left}
+.pk.on{border-color:var(--ok)}
+.pk img{width:100%;height:112px;object-fit:cover;display:block;background:#e9e7e3}
+.pk span{display:block;font-size:12px;padding:4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.duo img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;background:#e9e7e3;display:block}
+.duo .ph{aspect-ratio:3/4;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;color:var(--mut);font-size:13px;text-align:center;padding:8px}
+.ens{border:1px solid var(--line);border-radius:16px;padding:10px;margin:10px 0;background:var(--card)}
+.ens .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-top:8px}
+.ens .hd b{font-size:20px;font-weight:900;white-space:nowrap}
+.ens .nm{font-size:13px;color:var(--mut);margin-top:4px}
+.ens .nm a{color:var(--ink)}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;background:#24352b;color:#8ff0bd}
+.tag.mid{background:#2f2b1d;color:#f0d78f}.tag.low{background:#3a2020;color:#ffb1a8}
+.ebtn{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.ebtn button{border:1px solid var(--line);background:#161617;border-radius:10px;padding:8px 12px;min-height:40px;font-size:14px}
+.ebtn .go{background:var(--ok);color:#06140d;border-color:var(--ok);font-weight:900}
+.var{display:inline-block;margin-left:6px;font-size:12px;color:#c9c6c0}
+@media (prefers-reduced-motion:reduce){.card{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Swipe Black Friday</h1>
+    <button class="likesbtn" id="openLikes">♥ <b id="nLikes">0</b> · <span id="tLikes">favoris</span></button>
+  </header>
+  <div class="mode" id="modebar"><span><b>Tri des favoris</b> · → garder · ← retirer</span><button id="exitTri">Revenir au catalogue</button></div>
+  <div class="filters" id="filters"></div>
+  <div class="prog"><i id="bar"></i></div>
+  <div class="meta"><span id="count"></span><span>← passer · liker →</span></div>
+  <div class="stage" id="stage"></div>
+  <div class="actions">
+    <button class="act undo" id="undo" aria-label="Annuler">↺</button>
+    <button class="act no" id="no" aria-label="Passer">✕</button>
+    <button class="act yes" id="yes" aria-label="Liker">♥</button>
+  </div>
+  <div class="hint">Glisse la carte, ou utilise les flèches du clavier. Touche la carte pour voir la photo suivante.</div>
+</div>
+
+<div class="sheet" id="sheet"><div class="panel">
+  <div class="top"><div class="tabs" id="tabs"></div><button class="close" id="closeLikes">Fermer</button></div>
+  <div id="sumbox">
+    <div class="tot"><span id="lc"></span><b id="lt"></b></div>
+    <div class="bud" id="bud"><i id="budi"></i></div>
+    <div class="budtxt" id="budtxt"></div>
+  </div>
+  <button class="cta" id="startTri"></button>
+  <div id="list"></div>
+  <div id="ensbox"></div>
+  <div class="btns">
+    <button id="copy">Copier la sélection</button>
+    <button id="reset">Tout recommencer</button>
+  </div>
+  <div class="note">Prix Black Friday relevés le 26/11 vers 11h. Pull&amp;Bear : -40 % de ce soir 19h au 28/11 à 2h. Bershka : jusqu'à -50 %. Vérifie le prix final dans le panier.</div>
+</div></div>
+
+<script>
+{
+const BUDGET=200;
+const PBI='https://static.pullandbear.net/assets/public/', PBU='https://www.pullandbear.com/fr/';
+const BKI='https://static.bershka.net/assets/public/', BKU='https://www.bershka.com/fr/article-c0p';
+const PB=[
+["Jean slim","P",17.99,29.99,"f22d/1f76/bf1a471fa744/7c5c59cc6e91/07660503433-M/07660503433-M.jpg","jean-slim-l07660503?cS=433&pelement=748856503"],
+["Jean slim","P",17.99,29.99,"0333/d96b/1d3a4705b010/e6e2d707af30/07660503434-M/07660503434-M.jpg","jean-slim-l07660503?cS=434&pelement=748856504"],
+["Jean slim","P",17.99,29.99,"e9f6/3512/9d9f475c91f4/7c9c3ab650ab/07660503833-M/07660503833-M.jpg","jean-slim-l07660503?cS=833&pelement=748856506"],
+["Jean slim","P",17.99,29.99,"693f/31c9/2e8f49c1847a/db722d8e42b1/07660503800-M/07660503800-M.jpg","jean-slim-l07660503?cS=800&pelement=748856507"],
+["Jean slim","P",17.99,29.99,"d816/c5a2/21234702ae91/6387e2feeb39/07660503427-M/07660503427-M.jpg","jean-slim-l07660503?cS=427&pelement=748856508"],
+["Veste matelassée légère","B",27.59,45.99,"0232/07c1/e83b4989bd4d/ccb8a505eb88/07721512512-M/07721512512-M.jpg","veste-matelassee-legere-l07721512?cS=512&pelement=748856719"],
+["Veste en similicuir","B",27.59,45.99,"6dec/d9e3/94034997bd1c/ee9032daf864/07721513800-M/07721513800-M.jpg","veste-en-similicuir-l07721513?cS=800&pelement=748856819"],
+["Veste brodée","B",27.59,45.99,"202b/090e/68f7455085f2/87863c506cf5/07721500518-M/07721500518-M.jpg","veste-brodee-l07721500?cS=518&pelement=748857168"],
+["Pantalon imprimé animal","P",21.59,35.99,"fef5/792a/071c490f95f5/d0a72953cb20/07671508710-M/07671508710-M.jpg","pantalon-imprime-animal-l07671508?cS=710&pelement=748857204"],
+["Jean baggy","P",21.59,35.99,"e1c9/58fe/e46a439894bb/c60339aecdc7/07660500401-M/07660500401-M.jpg","jean-baggy-l07660500?cS=401&pelement=748862773"],
+["Jean baggy","P",21.59,35.99,"22f3/edcd/c2db4b95beb1/dac23ed2d6f6/07660500424-M/07660500424-M.jpg","jean-baggy-l07660500?cS=424&pelement=748862775"],
+["Veste à brandebourgs","B",29.99,49.99,"39f1/14ed/7b524e46bada/46d771504914/07721501800-M/07721501800-M.jpg","veste-a-brandebourgs-l07721501?cS=800&pelement=748862977"],
+["Pantalon droit","P",17.99,29.99,"7eff/b2a6/003a42958194/b5c08f0fd8a6/07670505700-M/07670505700-M.jpg","pantalon-droit-l07670505?cS=700&pelement=748862992"],
+["Pantalon droit","P",17.99,29.99,"0d79/2675/efe74263acd7/fe37af61fb9a/07670505800-M/07670505800-M.jpg","pantalon-droit-l07670505?cS=800&pelement=748862993"],
+["Pantalon droit","P",17.99,29.99,"94ac/157b/53ea4accb8b6/5770419b0b3d/07670505806-M/07670505806-M.jpg","pantalon-droit-l07670505?cS=806&pelement=748862995"],
+["Doudoune à capuche","B",21.59,35.99,"7caf/2c74/c68340cab8e5/5aa2aded7589/07720503507-M/07720503507-M.jpg","doudoune-a-capuche-l07720503?cS=507&pelement=748863096"],
+["Pantalon chino baggy à pinces","P",17.99,29.99,"092d/b5b6/3e0e4b07802e/d242cbc172e3/07670502401-M/07670502401-M.jpg","pantalon-chino-baggy-a-pinces-l07670502?cS=401&pelement=748863203"],
+["Pantalon chino baggy à pinces","P",17.99,29.99,"9a7c/5216/84594d14a5c1/2c6edaed4ad1/07670502700-M/07670502700-M.jpg","pantalon-chino-baggy-a-pinces-l07670502?cS=700&pelement=748863205"],
+["Pantalon chino baggy à pinces","P",17.99,29.99,"570e/b8fd/a3814ad5842a/4d767116f767/07670502800-M/07670502800-M.jpg","pantalon-chino-baggy-a-pinces-l07670502?cS=800&pelement=748863206"],
+["Pantalon chino baggy à pinces","P",17.99,29.99,"b67c/59c2/60024d2a9cbe/2a70cce17b30/07670502251-M/07670502251-M.jpg","pantalon-chino-baggy-a-pinces-l07670502?cS=251&pelement=748863207"],
+["Veste matelassée à capuche STWD","B",27.59,45.99,"bc3b/3dd4/035c4b308aec/4a034d6d0293/07720502807-M/07720502807-M.jpg","veste-matelassee-a-capuche-stwd-l07720502?cS=807&pelement=748863213"],
+["Jean standard","P",17.99,29.99,"0f38/30c0/0deb4613b702/84cc50e2d932/07660501405-M/07660501405-M.jpg","jean-standard-l07660501?cS=405&pelement=748863272"],
+["Veste trucker","B",21.59,35.99,"eb02/30e2/b831443b86a5/422af8b2714f/07720516800-M/07720516800-M.jpg","veste-trucker-l07720516?cS=800&pelement=748863285"],
+["Veste trucker","B",21.59,35.99,"fb1e/eac8/c47d49bc9b76/31b723209fa3/07720516251-M/07720516251-M.jpg","veste-trucker-l07720516?cS=251&pelement=748863286"],
+["Pantalon tailoring jogger","P",17.99,29.99,"45cc/b610/ea3d421083fb/469c699b258e/03670502800-M/03670502800-M.jpg","pantalon-tailoring-jogger-l03670502?cS=800&pelement=748863378"],
+["Veste matelassée col montant","B",23.99,39.99,"50ba/fc6f/0b67445f905f/b3236de0d803/07720909524-M/07720909524-M.jpg","veste-matelassee-col-montant-l07720509?cS=524&pelement=748866959"],
+["Veste matelassée col montant","B",23.99,39.99,"9142/f943/46124a809126/78d9b1beb3b2/07720509800-M/07720509800-M.jpg","veste-matelassee-col-montant-l07720509?cS=800&pelement=748866960"],
+["Pantalon tailoring à pinces","P",21.59,35.99,"9570/93fa/3a394a239c9f/69e15a058b93/07670501700-M/07670501700-M.jpg","pantalon-tailoring-a-pinces-l07670501?cS=700&pelement=748866983"],
+["Pantalon tailoring à pinces","P",21.59,35.99,"2f40/dda0/f029411a80cc/7c07b9aa67cc/07670501800-M/07670501800-M.jpg","pantalon-tailoring-a-pinces-l07670501?cS=800&pelement=748866984"],
+["Pantalon tailoring à pinces","P",21.59,35.99,"1db5/1c19/3fd149c4af93/023f94b7e0b8/07670501806-M/07670501806-M.jpg","pantalon-tailoring-a-pinces-l07670501?cS=806&pelement=748866985"],
+["Trench court","B",29.99,49.99,"cd66/808b/88c94462844b/b358e52b5406/07721531711-M/07721531711-M.jpg","trench-court-l07721531?cS=711&pelement=748867065"],
+["Jean droit","P",17.99,29.99,"6bbd/53e9/6f04484084fa/0e0b1579f9d7/07660502800-M/07660502800-M.jpg","jean-droit-l07660502?cS=800&pelement=748920121"],
+["Veste bomber matelassée","B",21.59,35.99,"1cdb/5ed6/384f471c9f75/6bf581e9f78a/07720900505-M/07720900505-M.jpg","veste-bomber-matelassee-l07720500?cS=505&pelement=748920124"],
+["Veste bomber matelassée","B",21.59,35.99,"bc13/9845/b43642caa1f9/7077f65ca5aa/07720900407-M/07720900407-M.jpg","veste-bomber-matelassee-l07720500?cS=407&pelement=748920125"],
+["Veste enduite à col en velours côtelé","B",29.99,49.99,"f3e0/baf7/a7404aaea078/54f8686730ad/07721508670-M/07721508670-M.jpg","veste-enduite-a-col-en-velours-cotele-l07721508?cS=670&pelement=749205736"],
+["Pantalon jogging skater STWD","P",21.59,35.99,"6e75/1a87/a63d4e61a6a1/a39d88dcba0e/07670511800-M/07670511800-M.jpg","pantalon-jogging-skater-stwd-l07670511?cS=800&pelement=749450045"],
+["Pantalon baggy effet néoprène","P",21.59,35.99,"02ac/45c6/e61a42279326/aded37ce817f/07670900807-M/07670900807-M.jpg","pantalon-baggy-effet-neoprene-l07670500?cS=807&pelement=749450048"],
+["Pantalon effet néoprène à pinces","P",21.59,35.99,"1334/7a8e/baea41fab678/d2433cdb0f67/07671900700-M/07671900700-M.jpg","pantalon-effet-neoprene-a-pinces-l07671509?cS=700&pelement=749533739"],
+["Pantalon effet néoprène à pinces","P",21.59,35.99,"33cd/9cad/4fd64963827c/9d6f93d21cd4/07671900803-M/07671900803-M.jpg","pantalon-effet-neoprene-a-pinces-l07671509?cS=803&pelement=749533741"],
+["Veste ballon effet néoprène","B",23.99,39.99,"d915/e34a/b4b04404a48c/95d292a9d358/07721918700-M/07721918700-M.jpg","veste-ballon-effet-neoprene-l07721518?cS=700&pelement=749552121"],
+["Jean straight déchiré","P",23.99,39.99,"0a5f/dd13/b8754f52bc89/65c2a1ef4dc6/07662506427-M/07662506427-M.jpg","jean-straight-dechire-l07662506?cS=427&pelement=749635965"],
+["Veste denim zippée","B",27.59,45.99,"7322/0cdc/655d4c9eaf88/b89be7b6fe22/07720517401-M/07720517401-M.jpg","veste-denim-zippee-l07720517?cS=401&pelement=749635979"],
+["Veste en jean trucker","B",23.99,39.99,"72f6/5307/aaa449879152/b1010d02cc19/07720518700-M/07720518700-M.jpg","veste-en-jean-trucker-l07720518?cS=700&pelement=749635980"],
+["Pantalon jogger baggy STWD","P",15.59,25.99,"0d92/f444/8aa44270a7a9/c501388caca4/07670510400-M/07670510400-M.jpg","pantalon-jogger-baggy-stwd-l07670510?cS=400&pelement=749920368"],
+["Jean wide leg","P",21.59,35.99,"68c9/b0a8/d6e84597876e/6d492b472750/07662511434-M/07662511434-M.jpg","jean-wide-leg-l07662511?cS=434&pelement=749920372"],
+["Veste à carreaux","B",29.99,49.99,"4c28/b193/e42c4dafbfe8/a62269c5636e/07721515526-M/07721515526-M.jpg","veste-a-carreaux-l07721515?cS=526&pelement=749920380"],
+["Pantalon de jogging baggy basique","P",15.59,25.99,"2043/bab8/1f6b4442bf21/418f3d119aad/07670903501-M/07670903501-M.jpg","pantalon-de-jogging-baggy-basique-l07670507?cS=501&pelement=749920385"],
+["Pantalon de jogging baggy basique","P",15.59,25.99,"ee12/5b4d/92d24f488831/13e806a313d2/07670903485-M/07670903485-M.jpg","pantalon-de-jogging-baggy-basique-l07670507?cS=485&pelement=749944802"],
+["Pantalon de jogging baggy basique","P",15.59,25.99,"9afc/9e64/88984989ae00/3546996d8342/07670903821-M/07670903821-M.jpg","pantalon-de-jogging-baggy-basique-l07670507?cS=821&pelement=749944803"],
+["Veste matelassée motif racing","B",27.59,45.99,"54a4/46b7/972843038297/4440a7ce985e/07721535524-M/07721535524-M.jpg","veste-matelassee-motif-racing-l07721535?cS=524&pelement=750331128"],
+["Jean skinny basique","P",15.59,25.99,"6fdd/e9b5/41c34e1c84f2/87709a67a62a/07687500434-M/07687500434-M.jpg","jean-skinny-basique-l07687500?cS=434&pelement=750582795"],
+["Jean baggy ballon","P",21.59,35.99,"8ddb/77ba/dc3d49f185e5/3658ad79664b/07662505250-M/07662505250-M.jpg","jean-baggy-ballon-l07662505?cS=250&pelement=750792472"],
+["Jeans baggy","P",21.59,35.99,"165d/aa0a/5ac542d3b399/7ab61eec30f6/03660550401-M/03660550401-M.jpg","jeans-baggy-l03660516?cS=401&pelement=751026537"],
+["Jeans baggy","P",21.59,35.99,"ee82/11d0/1391489cbf24/a483e44e859b/03660550434-M/03660550434-M.jpg","jeans-baggy-l03660516?cS=434&pelement=751026538"],
+["Veste denim capuche zip STWD","B",23.99,39.99,"ec0b/0edc/d30641c6a943/4fc09948e467/07720519811-M/07720519811-M.jpg","veste-denim-capuche-zip-stwd-l07720519?cS=811&pelement=751217816"],
+["Jean standard","P",17.99,29.99,"e4dd/f835/1a924e71a531/2470f032c742/07660501401-M/07660501401-M.jpg","jean-standard-l07660501?cS=401&pelement=751540512"],
+["Pantalon tailoring wide leg","P",21.59,35.99,"c2be/2fce/9de84a20b0fc/b9c1c855802c/07674903401-M/07674903401-M.jpg","pantalon-tailoring-wide-leg-l07677509?cS=401&pelement=751540516"],
+["Veste denim rayée","B",27.59,45.99,"4229/cf13/0d81407b81b6/fe0d3639447a/07721526800-M/07721526800-M.jpg","veste-denim-rayee-l07721526?cS=800&pelement=751648176"],
+["Pantalon jogger baggy","P",17.99,29.99,"87f3/cb47/038a4adabf08/12f750bc0c6a/03670508800-M/03670508800-M.jpg","pantalon-jogger-baggy-l03670508?cS=800&pelement=752040616"],
+["Pantalon jogger baggy","P",17.99,29.99,"e4f9/9405/b2ca4d51a7bf/868486e64032/03670508251-M/03670508251-M.jpg","pantalon-jogger-baggy-l03670508?cS=251&pelement=752040617"],
+["Jean baggy relaxed fit à panneaux","P",23.99,39.99,"f3cb/662b/1d3141ad8b8a/21f99e752cb9/07662518434-M/07662518434-M.jpg","jean-baggy-relaxed-fit-a-panneaux-l07662518?cS=434&pelement=752245400"],
+["Jeans relaxed fit déchirés","P",21.59,35.99,"315f/60dd/10624e20a34c/1e72ea1e6f57/07662705434-M/07662705434-M.jpg","jeans-relaxed-fit-dechires-l03661518?cS=434&pelement=752343040"],
+["Jeans relaxed fit déchirés","P",21.59,35.99,"8b52/c1ac/b3db4c1fb3b5/90b96bd51347/07662705833-M/07662705833-M.jpg","jeans-relaxed-fit-dechires-l03661518?cS=833&pelement=752343041"],
+["Jean relaxed fit","P",21.59,35.99,"0f8b/f196/402c45569cc5/f00cab8d26f0/07662509401-M/07662509401-M.jpg","jean-relaxed-fit-l07662509?cS=401&pelement=752616704"],
+["Veste en jean à poches","B",23.99,39.99,"8a5f/744f/bd8a4665871f/af6515b18f08/07721540401-M/07721540401-M.jpg","veste-en-jean-a-poches-l07721540?cS=401&pelement=752616705"],
+["Jean barrel","P",21.59,35.99,"8b27/e1fd/bdb549dbbf69/13c657239133/07660907406-M/07660907406-M.jpg","jean-barrel-l07660507?cS=406&pelement=752932321"],
+["Jean barrel","P",21.59,35.99,"2788/566d/bf184cf3a812/b958983d2c1b/07660907407-M/07660907407-M.jpg","jean-barrel-l07660507?cS=407&pelement=752932322"],
+["Veste en jean trucker","B",23.99,39.99,"2bae/2446/02f74d098903/18cdf9a0fe05/07720521434-M/07720521434-M.jpg","veste-en-jean-trucker-l07720521?cS=434&pelement=753154661"],
+["Jean skinny déchiré","P",21.59,35.99,"6859/0779/a7d14751b7cd/d9e71e1da478/07660521434-M/07660521434-M.jpg","jean-skinny-dechire-l07660521?cS=434&pelement=753434561"],
+["Jean skinny déchiré","P",21.59,35.99,"02c3/01e0/9e3f49fc8e1d/06d41b81dc06/07660521833-M/07660521833-M.jpg","jean-skinny-dechire-l07660521?cS=833&pelement=753434562"],
+["Jean skinny déchiré","P",21.59,35.99,"4fc8/635f/41764573bc39/0799589c4096/07660521922-M/07660521922-M.jpg","jean-skinny-dechire-l07660521?cS=922&pelement=753434563"],
+["Jean skinny déchiré","P",21.59,35.99,"b8ed/86c7/ba60497bb8fb/c955618fa051/07660521427-M/07660521427-M.jpg","jean-skinny-dechire-l07660521?cS=427&pelement=753434564"],
+["Pantalon jogger cargo","P",17.99,29.99,"f0b6/9c41/224c4b05ba01/89d41e4716ad/07674500800-M/07674500800-M.jpg","pantalon-jogger-cargo-l07674500?cS=800&pelement=753545413"],
+["Pantalon jogger cargo","P",17.99,29.99,"0ad9/a072/379b46a19015/f4d94c8b21dc/07674500505-M/07674500505-M.jpg","pantalon-jogger-cargo-l07674500?cS=505&pelement=753545414"],
+["Doudoune thermosoudée à capuche","B",29.99,49.99,"bef3/a39d/8257446c80c4/78906db65242/07700505501-M/07700505501-M.jpg","doudoune-thermosoudee-a-capuche-l07700505?cS=501&pelement=753545419"],
+["Veste en jean col mouton synthétique","B",23.99,39.99,"7814/d164/34ce41648a1f/e2d157b230d4/07701519833-M/07701519833-M.jpg","veste-en-jean-col-mouton-synthetique-l07701519?cS=833&pelement=753545423"],
+["Veste en jean col mouton synthétique","B",23.99,39.99,"2f45/bd52/fd4445f1a18c/80805217dd7e/07701519427-M/07701519427-M.jpg","veste-en-jean-col-mouton-synthetique-l07701519?cS=427&pelement=753545424"],
+["Jean relaxed à pinces et ceinture","P",21.59,35.99,"1e69/dee7/2ae34500a53b/d4da6bcd4b01/07662517401-M/07662517401-M.jpg","jean-relaxed-a-pinces-et-ceinture-l07662517?cS=401&pelement=753978384"],
+["Jean à revers à carreaux","P",23.99,39.99,"6e87/0c7b/2e8f497a8bc4/af049f0f7b0f/07662508401-M/07662508401-M.jpg","jean-a-revers-a-carreaux-l07662508?cS=401&pelement=754363130"],
+["Veste denim poches","B",23.99,39.99,"07e7/3b2b/c30b4295a753/b6659879e4fe/07721538401-M/07721538401-M.jpg","veste-denim-poches-l07721538?cS=401&pelement=754363131"],
+["Veste zippée à panneaux","B",21.59,35.99,"8f8f/0e55/0fb2410ab2e5/286ff2e38441/07721945070-M/07721945070-M.jpg","veste-zippee-a-panneaux-l07721545?cS=070&pelement=754603268"],
+["Jean baggy relaxed","P",21.59,35.99,"5639/7b20/25fe4d87890e/0fc31898045c/07660903611-M/07660903611-M.jpg","jean-baggy-relaxed-l07660508?cS=611&pelement=754787265"],
+["Jean barrel détail brodé","P",23.99,39.99,"d5fa/b280/24594767aa33/022c03129a27/07662522434-M/07662522434-M.jpg","jean-barrel-detail-brode-l07662522?cS=434&pelement=754923329"],
+["Pantalon jogger ballon STWD","P",21.59,35.99,"8b59/9205/fbf74e0a90a4/81178847e75d/07670531725-M/07670531725-M.jpg","pantalon-jogger-ballon-stwd-l07670531?cS=725&pelement=757013927"],
+["Jean baggy","P",21.59,35.99,"7a24/6d1e/c9564e9d875a/699d1907b860/07660906600-M/07660906600-M.jpg","jean-baggy-l07660500?cS=600&pelement=757635690"],
+["Jean standard","P",17.99,29.99,"ab37/41d0/3f9e41c394fc/7ee73392eefe/07660900433-M/07660900433-M.jpg","jean-standard-l07660900?cS=433&pelement=758948626"],
+["Jean relaxed fit à pinces","P",23.99,39.99,"0344/8abd/a0ec4bc888ec/72ea84a260a6/07662535833-M/07662535833-M.jpg","jean-relaxed-fit-a-pinces-l07662535?cS=833&pelement=759774861"],
+["Surchemise à carreaux","B",21.59,35.99,"0fa2/29ff/ed514948aa05/9abf10c475f1/07460954407-M/07460954407-M.jpg","surchemise-manches-longues-a-carreaux-l07460954?cS=407&pelement=761249572"],
+["Surchemise à carreaux","B",21.59,35.99,"e606/d785/40a14602ad33/f13623d58ceb/07460901251-M/07460901251-M.jpg","surchemise-a-manches-longues-a-carreaux-l07460901?cS=251&pelement=761249573"],
+["Jean baggy relaxed fit contrastant","P",23.99,39.99,"bf2b/06f3/e2234196b588/08969b985aa4/07662529922-M/07662529922-M.jpg","jean-baggy-relaxed-fit-contrastant-l07662529?cS=922&pelement=761939004"]
+];
+const BK=[
+["Pantalon super baggy fit à plis","P",17.99,35.99,"4e92/c631/d6eb413f93f1/17a1e63c1ca5/02427190812-r/02427190812-r.jpg","233420890?colorId=812"],
+["Pantalon baggy tailoring croisé","P",19.99,39.99,"a45d/697c/e92146e794c1/30c10ea7d5ab/03678710711-a4o/03678710711-a4o.jpg","230928382?colorId=711"],
+["Pantalon super baggy fit à plis","P",17.99,35.99,"d758/0638/90ac4c998f66/60909eff31bf/02427190401-b/02427190401-b.jpg","233420888?colorId=401"],
+["Pantalon barrel fit à pinces","P",19.99,39.99,"e325/1d6a/ae284dc4b1ec/780e00df6135/03012073800-r/03012073800-r.jpg","226931677?colorId=800"],
+["Jeans bootcut","P",19.99,39.99,"4cc1/7a74/f3544835b15a/f39a7c6b7252/02610156401-r/02610156401-r.jpg","227531245?colorId=401"],
+["Jeans barrel fit","P",19.99,39.99,"5682/9e0f/78d748e8967e/4bc2c3834e0b/01308231428-r/01308231428-r.jpg","229737114?colorId=428"],
+["Pantalon barrel à pinces avec ceinture","P",24.99,49.99,"a4d3/570c/ce384dc7b3a8/16eed599686a/02742606060-r/02742606060-r.jpg","226926623?colorId=505"],
+["Jeans baggy fit","P",17.99,35.99,"a3a1/6fdc/4c9942e1877c/1370c0305f92/02882352428-r/02882352428-r.jpg","226931505?colorId=428"],
+["Jean baggy fit","P",22.99,45.99,"71ff/864e/37d840148bf3/140f4ac09808/02799231401-a4o/02799231401-a4o.jpg","227531233?colorId=401"],
+["Jean balloon fit avec coutures","P",19.99,39.99,"3ee5/d188/bd234596944f/8c1da1637c17/02811352401-r/02811352401-r.jpg","228453287?colorId=401"],
+["Pantalon super baggy fit à plis","P",17.99,35.99,"67d5/8ffe/2feb4c359afd/1202b4d09da4/02427190800-r/02427190800-r.jpg","233420889?colorId=800"],
+["Jeans super baggy fit imprimé latéral","P",22.99,45.99,"ff3c/6831/d6e946f5acee/4d8825905d38/02579352433-a4o/02579352433-a4o.jpg","242077559?colorId=433"],
+["Jeans barrel fit","P",19.99,39.99,"5682/9e0f/78d748e8967e/4bc2c3834e0b/01308231428-r/01308231428-r.jpg","234324949?colorId=730"],
+["Jean neobarrel brodé","P",32.19,45.99,"f8d6/fc76/aca343f699ab/1462e6bdddcc/02986236811-r/02986236811-r.jpg","240128113?colorId=811"],
+["Jeans twisted fit","P",19.99,39.99,"b3f1/7bc7/4a9e41acb16f/02e53e2f60df/02576335800-b/02576335800-b.jpg","226927254?colorId=800"],
+["Pantalon barrel fit à pinces avec ceinture","P",24.99,49.99,"a4d3/570c/ce384dc7b3a8/16eed599686a/02742606060-r/02742606060-r.jpg","226926621?colorId=711"],
+["Jean baggy flare","P",19.99,39.99,"a8aa/ff7c/77c9499880d5/8c60ed12e48a/00855352428-b/00855352428-b.jpg","229737336?colorId=809"],
+["Pantalon jogger fit","P",16.09,22.99,"5414/7353/94c449408c3a/a18f1786075f/02439478250-a4o/02439478250-a4o.jpg","233408548?colorId=250"],
+["Jeans bootcut","P",19.99,39.99,"c3ea/3696/265e4cf1a48e/695d6890cdb6/02610156428-r/02610156428-r.jpg","227531246?colorId=428"],
+["Pantalon super baggy fit à rayures tennis","P",19.99,39.99,"f415/528e/4afa4b008291/382f3e8204f5/02963073401-r/02963073401-r.jpg","226931551?colorId=401"],
+["Jean baggy flare","P",19.99,39.99,"a8aa/ff7c/77c9499880d5/8c60ed12e48a/00855352428-b/00855352428-b.jpg","229737337?colorId=428"],
+["Pantalon à pois baggy fit croisé","P",19.99,39.99,"df58/df09/3daa414d889a/4cfcf37b5558/03587073711-r/03587073711-r.jpg","231948413?colorId=711"],
+["Pantalon super baggy fit à pinces fluide","P",14.99,29.99,"c9a1/acef/1fd14e87be55/1ce4d2d8113e/00943710800-r/00943710800-r.jpg","229737238?colorId=800"],
+["Pantalon barrel fit","P",19.99,39.99,"8b33/f687/b5844561b135/f79a1d53ad42/03024053800-r/03024053800-r.jpg","228480468?colorId=800"],
+["Pantalon baggy à carreaux","P",22.99,45.99,"cfdd/c88d/33a146448f90/4ee69dee420c/03884054210-a4o/03884054210-a4o.jpg","232962124?colorId=210"],
+["Pantalon baggy cargo","P",19.99,39.99,"8511/33b8/058b464bbebe/36ec5947cc26/03509335711-a4o/03509335711-a4o.jpg","240127919?colorId=711"],
+["Pantalon super baggy semijogger plissé","P",27.99,39.99,"f775/47c8/d251417eabf5/317427d042f6/01106081250-r/01106081250-r.jpg","229737220?colorId=800"],
+["Pantalon à pinces en drap balloon fit","P",27.99,39.99,"a1e0/eb71/e28444f3904c/f4b0e73ec5af/03440707812-b/03440707812-b.jpg","231517322?colorId=812"],
+["Pantalon jogger fit","P",16.09,22.99,"30a9/5d5f/944c4b548947/5420a0502a10/02439478529-a4o/02439478529-a4o.jpg","233408547?colorId=529"],
+["Jean barrel fit à écussons","P",22.99,45.99,"c454/5167/8e0f45c4b740/aac600b493dd/03269156433-a4o/03269156433-a4o.jpg","232543379?colorId=433"],
+["Pantalon barrel fit à pinces","P",19.99,39.99,"7871/10bf/a7ca4f74b2bb/6037280f33bd/03012073211-s/03012073211-s.jpg","240128048?colorId=211"],
+["Jeans wide à pinces","P",19.99,39.99,"9552/4cf1/eec148d88403/e87f88df6ac2/02823335700-r/02823335700-r.jpg","227531254?colorId=700"],
+["Pantalon super baggy fit avec lin","P",19.99,39.99,"5e54/bde8/a9c447c8b28a/69338afcc1a6/01011053251-p/01011053251-p.jpg","229737387?colorId=251"],
+["Jean super baggy fit","P",22.99,45.99,"f692/50c9/bebe42139d47/407884e6f9b2/02817290428-b/02817290428-b.jpg","227850024?colorId=428"],
+["Jeans imprimé torsadé","P",19.99,39.99,"4e8d/10b6/59eb41dcb27f/c5e470552b40/03442335500-r/03442335500-r.jpg","237553235?colorId=500"],
+["Jeans bootcut","P",19.99,39.99,"6214/011e/27a741af9286/c3ef33e7de8b/02610156800-r/02610156800-r.jpg","247647136?colorId=800"],
+["Pantalon baggy cargo","P",19.99,39.99,"64ed/dfb3/72c04549b90f/a327fffbc56a/04299335401-s/04299335401-s.jpg","235814535?colorId=401"],
+["Jeans twisted fit","P",19.99,39.99,"9052/c3bb/94c24cd58b09/e309cd2c3a4e/02576335811-r/02576335811-r.jpg","227741817?colorId=811"],
+["Jean neobarrel brodé","P",32.19,45.99,"99f8/0b2d/fe974d86b293/75c58e424610/02986236428-r/02986236428-r.jpg","240127935?colorId=428"],
+["Pantalon baggy à imprimé","P",12.99,25.99,"9750/e2ba/99ca4f8daa55/88c19e41abad/02341053548-r/02341053548-r.jpg","232668374?colorId=548"],
+["Pantalon baggy jogger fit délavé","P",17.99,35.99,"dae2/78a0/e75c46a580f0/32164f77d6b2/03570498810-r/03570498810-r.jpg","233503186?colorId=810"],
+["Jeans slim","P",17.99,35.99,"5964/6977/19314016b292/c295eea04e9e/02941054426-a4o/02941054426-a4o.jpg","226927344?colorId=426"],
+["Jeans baggy fit skater","P",19.99,39.99,"07db/7456/ef6c41998b35/b4b48037b218/02582236800-a4o/02582236800-a4o.jpg","246887925?colorId=800"],
+["Pantalon barrel fit","P",19.99,39.99,"6c69/f237/60954160b7cf/163fd1efa1c3/03024053436-r/03024053436-r.jpg","228480467?colorId=436"],
+["Jeans texture carreaux","P",25.19,35.99,"0de3/9bce/87e945d79c68/9eceefff01e5/02801335433-r/02801335433-r.jpg","227229878?colorId=433"],
+["Jean straight wide déchiré","P",19.99,39.99,"22ec/ef61/03c142ba9043/e7039b32197b/03031290428-a4o/03031290428-a4o.jpg","228741270?colorId=428"],
+["Pantalon super baggy fit à pinces","P",19.99,39.99,"5e54/bde8/a9c447c8b28a/69338afcc1a6/01011053251-p/01011053251-p.jpg","231041962?colorId=800"],
+["Jean neobarrel brodé","P",32.19,45.99,"1fab/5bdc/87184a37aa04/1c3583b8bec4/02986236800-s/02986236800-s.jpg","226927246?colorId=800"],
+["Pantalon jogger fit rayures tennis","P",19.99,39.99,"f0f4/7ef2/a20b4bdcbc8e/cd5170612bfd/02844710210-s/02844710210-s.jpg","227120987?colorId=210"],
+["Jeans balloon fit couture","P",19.99,39.99,"b1d8/5c78/e3004a55bfba/4671b085bcf6/02811352800-r/02811352800-r.jpg","228453288?colorId=800"],
+["Pantalon super baggy fit rustique","P",20.99,29.99,"0170/1bf3/a8044421b64a/cc5b26670990/00995721250-p/00995721250-p.jpg","229737065?colorId=800"],
+["Pantalon baggy à passepoil contrastant","P",27.99,39.99,"afa8/3258/bb814dc4a2b1/197b829c456a/04522053401-r/04522053401-r.jpg","239302885?colorId=401"],
+["Jean skinny","P",14.99,29.99,"8470/843f/04c741d39ed6/ce9c47a2be20/03222089433-a4o/03222089433-a4o.jpg","230144667?colorId=433"],
+["Jeans baggy fit cargo","P",25.19,35.99,"7c74/cd08/2ca04c84a094/2de64f3b6416/03043335800-r/03043335800-r.jpg","228459984?colorId=800"],
+["Jean cargo barrel fit","P",19.99,39.99,"a6fb/1d0f/37ab4b048a86/ca4d6246f54c/01887231433-r/01887231433-r.jpg","229737071?colorId=433"],
+["Jean baggy fit cargo","P",25.19,35.99,"7ccb/29fc/850d49e1a748/cf9992bfd460/03043335811-b/03043335811-b.jpg","228459983?colorId=811"],
+["Jeans baggy fit cargo","P",25.19,35.99,"c94f/eab7/1c7447328d49/b1a44bf98377/03043335433-s/03043335433-s.jpg","228459982?colorId=433"],
+["Jeans cloutés","P",22.99,45.99,"cce2/2baf/ea314cb69fd4/496b20f83d55/03470335800-r/03470335800-r.jpg","232543378?colorId=800"],
+["Jeans skinny","P",14.99,29.99,"5190/5b94/46f841abad3d/921363ad03f3/03222089800-r/03222089800-r.jpg","230144668?colorId=800"],
+["Jean skinny","P",14.99,29.99,"0fe5/af67/4bf44e81b0c7/1f6aa89ea36b/03222089428-r/03222089428-r.jpg","230144669?colorId=428"],
+["Jeans brodé au dos","P",24.99,49.99,"8720/4762/90f743a3ad29/2e070e3a5775/02577352811-r/02577352811-r.jpg","226927330?colorId=811"],
+["Pantalon straight cargo technique","P",27.99,39.99,"16e4/bcee/8d1f40aeb57c/c9675991fc88/03883053811-a4o/03883053811-a4o.jpg","231799616?colorId=811"],
+["Pantalon straight cargo technique","P",27.99,39.99,"80c1/3e2a/fc354d5bb387/7592d397b1da/03883053800-a4o/03883053800-a4o.jpg","231799617?colorId=800"],
+["Veste en jean capuche brandebourgs","B",24.99,49.99,"1730/75e6/6760470f9f98/28c179c761b2/02810352401-r/02810352401-r.jpg","228453286?colorId=401"],
+["Blouson coupe-vent capuche","B",19.99,39.99,"5846/9b4d/011741ffb17c/d95bd05cfb7b/02225718401-r/02225718401-r.jpg","226931257?colorId=401"],
+["Veste suédine à brandebourgs","B",34.99,49.99,"978f/447c/77454ca6bffc/b6f521208179/03098273318-r/03098273318-r.jpg","226926982?colorId=318"],
+["Blouson capuche matelassé quadrillé","B",24.99,49.99,"7964/32be/955941ac89eb/bfe1baf6f15b/02163551800-r/02163551800-r.jpg","226926915?colorId=800"],
+["Blouson bomber en drap de laine","B",34.99,49.99,"737c/0fe6/a84f45199a95/90cd4aa01c0d/02245450800-b/02245450800-b.jpg","226927396?colorId=800"],
+["Trench court","B",41.99,59.99,"72a2/23ca/cc5d49eb9a12/4f4a903a8a5a/03134109742-a4o/03134109742-a4o.jpg","226973371?colorId=742"],
+["Blouson zippé mouton synthétique","B",34.99,69.99,"a301/ee52/68974fe79016/6b8d3fc48504/03476273711-r/03476273711-r.jpg","228480490?colorId=711"],
+["Veste col montant en tissu scuba","B",41.99,59.99,"99d8/ec10/36cf4d349fae/29b4d640fc47/03078707802-r/03078707802-r.jpg","226931462?colorId=802"],
+["Blouson matelassé à capuche","B",34.99,69.99,"484c/e77d/4fd7470a8c31/4829c44e5d80/02162551462-a4o/02162551462-a4o.jpg","226931225?colorId=462"],
+["Gilet matelassé ultraléger","B",18.19,25.99,"6df5/37ad/31d9446ea142/93a9efd81e20/02236718800-r/02236718800-r.jpg","226931587?colorId=800"],
+["Blouson capuche matelassé grid","B",24.99,49.99,"45a0/b63d/989144909c22/71ad1a26138a/02163551505-a4o/02163551505-a4o.jpg","226926916?colorId=505"],
+["Blouson zippé à carreaux","B",34.99,49.99,"0bb1/02da/570c4bb8be21/faa1aeb267cd/02600140800-s/02600140800-s.jpg","226927131?colorId=800"],
+["Veste à liserés contrastants","B",20.99,29.99,"86d3/d591/2c11434db99a/0251169a7a0b/02274718400-r/02274718400-r.jpg","226931400?colorId=400"],
+["Veste zippée rayures tennis","B",32.19,45.99,"15ef/f858/a87749648e89/d527f0055d95/02966073401-r/02966073401-r.jpg","226931528?colorId=401"],
+["Blouson à capuche similicuir à clous","B",48.99,69.99,"d917/4801/16bc427d93c0/b3d40baef63c/02560677200-b/02560677200-b.jpg","243093342?colorId=200"],
+["Blouson technique à double col zippé","B",48.99,69.99,"935e/bc36/2a2e4d92a448/ac24a4c4ca89/03320140700-r/03320140700-r.jpg","228202951?colorId=700"],
+["Blouson bomber en drap de laine","B",34.99,49.99,"e1ae/503a/9743443d9b48/ac47cde2662f/02245564802-s/02245564802-s.jpg","226927397?colorId=802"],
+["Blouson à capuche en fausse fourrure","B",34.99,49.99,"4b2c/4169/4ec04a45b83a/efcc421495b7/03100273800-r/03100273800-r.jpg","226926921?colorId=800"],
+["Veste coupe-vent zippée","B",19.99,39.99,"e886/9b83/1adc406ea370/eb3adbc031e0/02813534600-b/02813534600-b.jpg","227229881?colorId=600"],
+["Bomber drap de laine à carreaux col cheminée","B",48.99,69.99,"6aaa/ad1c/b17947df896e/b9618331a6e1/03334758446-r/03334758446-r.jpg","251465876?colorId=446"],
+["Veste similicuir color block","B",41.99,59.99,"e514/84a6/07bc40f0b42f/5af1ca23dfc1/01019677606-p/01019677606-p.jpg","229736989?colorId=606"],
+["Blouson mouton synthétique à brandebourgs","B",34.99,69.99,"a4f2/3f4a/bc9b4fc49b1c/22a03617b13f/03102407700-r/03102407700-r.jpg","246888316?colorId=700"],
+["Blouson à brandebourgs","B",34.99,49.99,"07c9/65bf/8fc34ab2a636/a96dcf55902d/02447335712-r/02447335712-r.jpg","226927285?colorId=712"],
+["Blouson technique boxy fit à capuche","B",34.99,69.99,"e214/d1f3/88bb48789c19/eabbfec032a4/03495677892-s/03495677892-s.jpg","229089091?colorId=892"],
+["Bomber drap de laine pied-de-poule","B",48.99,69.99,"4390/737e/f39c4316addb/a11beecaad53/03131073039-a5o/03131073039-a5o.jpg","226926928?colorId=039"],
+["Blouson suédine zippé","B",34.99,49.99,"0b83/d278/c429495eaf68/3ae0359911a9/02159273737-r/02159273737-r.jpg","226926815?colorId=737"],
+["Blouson similicuir à clous","B",48.99,69.99,"6fae/b273/c409488eb85d/320cb67b01c0/02560677122-r/02560677122-r.jpg","243093341?colorId=122"],
+["Blouson similicuir brandebourg","B",41.99,59.99,"e4d7/f9ef/56bf460a9c64/504575a77ee3/03104677800-r/03104677800-r.jpg","226926781?colorId=800"],
+["Blouson bomber capuche fourrure","B",48.99,69.99,"6307/8534/56774420b75e/e0e8774edc56/03496677507-a5o/03496677507-a5o.jpg","229089092?colorId=507"],
+["Blouson effet suédine","B",34.99,49.99,"986d/cc36/c8d745908a9d/61f1b833f7bc/02445273600-r/02445273600-r.jpg","226931693?colorId=600"],
+["Blouson technique à passepoil contrastant","B",27.99,39.99,"8ab7/90e1/1ee848ceb1f5/d7c97200a915/04520053401-s/04520053401-s.jpg","239302884?colorId=401"],
+["Trench court","B",48.99,69.99,"8fce/e2da/92464d3c81de/ce39b58f3ac7/04062046505-s/04062046505-s.jpg","232248236?colorId=505"],
+["Blouson capuche similicuir Zoo York x Bershka","B",55.99,79.99,"941c/3d57/abb345d09dbc/dd91bd704125/02934677800-r/02934677800-r.jpg","226926834?colorId=800"],
+["Blouson bomber contrastant","B",32.19,45.99,"7118/9ef5/e71041f2a160/d407c2f89f08/03921046400-r/03921046400-r.jpg","231378822?colorId=400"],
+["Veste oversize rayures tennis","B",32.19,45.99,"dbbb/7c2a/9c524321bd1a/0215bef9c23b/02850710210-r/02850710210-r.jpg","227120988?colorId=210"],
+["Veste boutonnée","B",34.99,49.99,"b4b8/8956/4e9f4b9d85d8/95440f4885dd/02474335800-s/02474335800-s.jpg","226931254?colorId=800"],
+["Blouson bomber contrastant","B",32.19,45.99,"f709/ab5c/46b548a2a00a/a07fc159873f/03921046800-b/03921046800-b.jpg","231378823?colorId=800"],
+["Surchemise technique Out of Core","B",22.99,45.99,"c817/81e2/93a4456db2f4/cb28f49f3531/03145710712-r/03145710712-r.jpg","232963438?colorId=712"],
+["Surchemise technique Out of Core","B",22.99,45.99,"4e22/d65e/99e7451c8120/e437fa80d474/03145710401-s/03145710401-s.jpg","244572113?colorId=401"],
+["Blouson bomber similicuir","B",41.99,59.99,"71a4/4f14/4a4e44188f4c/fccd5fb974f8/03536677800-b/03536677800-b.jpg","246888378?colorId=800"],
+["Veste brandebourgs col contrastant","B",48.99,69.99,"92da/cad9/42c04ca5a238/74b2e7b25a2b/03380273756-s/03380273756-s.jpg","244456112?colorId=756"]
+];
+
+const items=[];
+const PBIMG={"748856503":"8361/38a1/757c428e9a14/a31cbf464f6f/07660504433-A6M/07660504433-A6M.jpg?ts=1781255384491","748856506":"4be9/9c38/0d394b57824a/4ea2ba7ce097/07660504833-Z/07660504833-Z.jpg?ts=1783931374176","748856819":"c2f7/bbd1/c3c345db9d76/5568aeabf2dd/07721513800-A20M/07721513800-A20M.jpg?ts=1784188055528","748862773":"2eaa/2e9f/2591409db621/a78565225782/07660500401-C/07660500401-C.jpg?ts=1781255391762","748866983":"e0e3/10cb/e3dd44e187cd/9755645f44f9/07670501700-A8M/07670501700-A8M.jpg?ts=1780587428895","748866984":"0790/8132/cf6843709ab6/c0b0d1cdc0c1/07670501800-A6M/07670501800-A6M.jpg?ts=1780587428043","748866985":"208d/1cb1/5b1647fc9702/02bbd5ee28d6/07670501806-A20M/07670501806-A20M.jpg?ts=1780587428745","748867065":"9d92/7788/fd8d46299bf7/162d38e0de86/07721531711-M/07721531711-M.jpg?ts=1788276939846","749205736":"8698/835e/9a9e42e0a1ac/4a203fce6372/07721508670-K1/07721508670-K1.jpg?ts=1788865650844","749920380":"cf1d/9cb0/bf7f42579bf1/462daed1e0b4/07721515526-A6M/07721515526-A6M.jpg?ts=1785941933376","749920385":"b30e/39f5/fe5b47b6bb76/9f046ba1eaeb/07670903501-A20M/07670903501-A20M.jpg?ts=1783958687380","749944802":"e010/a4f6/10104ace9fec/7ed6f5c1fe46/07670903485-C/07670903485-C.jpg?ts=1785839725283","750331128":"0e11/0c17/091f43de8861/461c944cf0c6/07721535524-C/07721535524-C.jpg?ts=1788949373872","751026537":"f37a/70e5/4db84c7aaab2/00797af1ddbc/03660516401-A4M/03660516401-A4M.jpg?ts=1770818960314","751026538":"8296/a6f3/76934f389bc3/e0e3e1e61e1c/03660516434-Z/03660516434-Z.jpg?ts=1766133903397","751217816":"3935/3450/d8a6447ab81f/a473a2cb09e1/07720519811-A6M/07720519811-A6M.jpg?ts=1784188056035","751540516":"a797/fab7/99b44e428479/d614394adfe5/07674903401-A6M/07674903401-A6M.jpg?ts=1784707014714","752040616":"1207/7bab/a1834143aa2c/09ac91490471/03670508800-A6M/03670508800-A6M.jpg?ts=1770628941607","752343040":"fc93/6c34/f7d84fd6b8d9/63e2f701be59/03661518434-A3M/03661518434-A3M.jpg?ts=1770710442705","752343041":"64f3/4973/8a4b43f186ed/2516cfd9ec81/03661518833-A6M/03661518833-A6M.jpg?ts=1770710573653","753154661":"7ab4/6197/bfdf40dfa005/f25c4dc30e82/07720521434-Z/07720521434-Z.jpg?ts=1785849677246","754363131":"1bad/fe16/52984756940e/db7a39c02f7c/07721538401-A17M/07721538401-A17M.jpg?ts=1785941932596","754603268":"10d8/b10b/bd2d4443b820/68a8bda1f254/07721945070-A20M/07721945070-A20M.jpg?ts=1790062396745","759774861":"ef04/3b50/faf34d8199dd/57be3422f623/07662535833-C/07662535833-C.jpg?ts=1788939900788"};
+PB.forEach(r=>{const pid=r[5].split('pelement=')[1];const path=PBIMG[pid]||r[4];items.push({id:'pb'+pid,b:'Pull&Bear',n:r[0],c:r[1],p:r[2],o:r[3],img:PBI+path+(path.includes('?')?'&':'?')+'w=750&f=auto',url:PBU+r[5],col:(r[5].match(/cS=(\d+)/)||[])[1]||''});});
+const BKIMG={"226926621":"7896/408d/143d41a0b593/8ce1303923ff/02742606060-p/02742606060-p.jpg?ts=1790837826439","226926623":"7896/408d/143d41a0b593/8ce1303923ff/02742606060-p/02742606060-p.jpg?ts=1790837826439","226926781":"d946/a056/72f94c78be51/4e2578ee2d75/03104677800-p/03104677800-p.jpg?ts=1786430760899","226926815":"8e92/1ebf/63374f87858f/5618d22d0b21/02159273737-p/02159273737-p.jpg?ts=1785336190912","226926834":"e165/5951/c2f1429baf80/fa437b030921/02934677800-p/02934677800-p.jpg?ts=1787568744122","226926915":"e6dc/a8f5/48144a6cbfcb/fd945c1350ff/02163551800-p/02163551800-p.jpg?ts=1792576524018","226926916":"d6a3/a9d7/fbda42ac97c7/75f708947018/02163551505-p/02163551505-p.jpg?ts=1785136210807","226926921":"f99e/09ee/6dc94c29bc93/81c635b6f89a/03100273800-p/03100273800-p.jpg?ts=1790861484612","226926928":"5d21/7e7a/f254492fafed/56799d0d8e80/03131073039-p/03131073039-p.jpg?ts=1790924819860","226926982":"76a7/0395/76a7469d9ef8/9daa6eb6547f/03098273318-p/03098273318-p.jpg?ts=1791546169068","226927131":"cb02/cb43/30d344029591/ca7e98e3ed58/02600140800-p/02600140800-p.jpg?ts=1787667758943","226927246":"bc25/8d77/78664c1ba8b7/87c370f55dc9/02986236800-p/02986236800-p.jpg?ts=1783602862502","226927254":"dc6f/8b6a/95d54a87a5b4/9cb124b87b4b/02576335800-p/02576335800-p.jpg?ts=1786355655014","226927285":"1dd3/e3f7/24c54c348302/708692ae50f2/02447335712-p/02447335712-p.jpg?ts=1786698362070","226927330":"903a/1941/c90a4020be0d/97a2729fd840/02577352811-p/02577352811-p.jpg?ts=1786539780775","226927344":"26c4/7efc/fbda48fa853e/b2376c4f169d/02941054426-p/02941054426-p.jpg?ts=1788358858309","226927396":"7de1/07a0/03fc453e897f/031ba55bc3f4/02245450800-p/02245450800-p.jpg?ts=1783000860854","226927397":"a274/1d80/0f76422bb1e5/6f1c8df858da/02245564802-p/02245564802-p.jpg?ts=1783000853061","226931225":"94ec/e7f0/f966477f9015/9face542321a/02162551462-p/02162551462-p.jpg?ts=1792143118709","226931254":"2d0b/bcef/2d3640d78e36/814f3b5174f7/02474335800-p/02474335800-p.jpg?ts=1784812758026","226931257":"993f/c4fc/831f42c5b131/76415cb2bfe2/02225718401-p/02225718401-p.jpg?ts=1779782109509","226931400":"635d/39bd/175c4e46b05e/01b4bd3e8fdf/02274718400-p/02274718400-p.jpg?ts=1779281355021","226931462":"070c/0d1b/a6c54a50a719/be673b42f9a9/03078707802-p/03078707802-p.jpg?ts=1793964786768","226931505":"4d31/4f2d/1d1a40178993/ea4ec6b0663e/02882787428-p/02882787428-p.jpg?ts=1785154217550","226931528":"6d5a/129f/94f747c5b117/de43dc4ac6d9/02966073401-p/02966073401-p.jpg?ts=1785771276716","226931551":"1514/0747/8fcf46ef95c7/6b517b6bedac/02963073401-p/02963073401-p.jpg?ts=1785771277568","226931587":"0878/070f/7bcd4c1eb190/20cde42b3ce6/02236718800-p/02236718800-p.jpg?ts=1784710120492","226931677":"9a59/f427/fbd843799924/3814f5342803/03012073800-p/03012073800-p.jpg?ts=1793964797198","226931693":"82a4/e8bd/873146c98c44/79caeaa83fb4/02445273600-p/02445273600-p.jpg?ts=1785846028536","226973371":"adb7/491e/d5764406a158/09489447dcc7/03134109742-p/03134109742-p.jpg?ts=1789719675283","227120987":"004b/f3bc/7ecd4e208033/f8967567b567/02844710210-p/02844710210-p.jpg?ts=1785396366125","227120988":"071a/46a2/9657447ebe4b/0e87c0b9c15c/02850710210-p/02850710210-p.jpg?ts=1785396365034","227229878":"a58d/5619/a75e459f9be2/3783388be8b6/02801335433-p/02801335433-p.jpg?ts=1785336173702","227229881":"e9bd/0611/e39c44e89b50/0c48aefedac9/02813534600-p/02813534600-p.jpg?ts=1784206398337","227531233":"468e/976b/a2b347c49ea2/f7f0e6dafbba/02799231401-p/02799231401-p.jpg?ts=1782981797527","227531245":"23d7/2883/8730400bad45/8fbdeebc7154/02610156401-p/02610156401-p.jpg?ts=1789719628272","227531246":"9b95/70c6/91914d8c88a9/aacf4e579ed0/02610156428-p/02610156428-p.jpg?ts=1784622701506","227531254":"39ea/1902/9d6c40fa9d35/2b1712fe3e6e/0282333570020-p/0282333570020-p.jpg?ts=1789031507620","227741817":"1008/272d/8ca14004be93/fac2ffcf7bed/02576335811-p/02576335811-p.jpg?ts=1786355827436","227850024":"066e/a96d/3c8245ac8b95/4ca262590aca/02817290428-p/02817290428-p.jpg?ts=1788358907225","228202951":"b59f/1274/e50b4c839591/6233e4d67311/03320140700-p/03320140700-p.jpg?ts=1794572746195","228453286":"7f02/078b/ba49438dbed9/7e173df8886d/02810352401-p/02810352401-p.jpg?ts=1787149486435","228453287":"4971/0399/8b6044318ec5/f7f677ea64e2/02811352401-p/02811352401-p.jpg?ts=1787235951475","228453288":"ed72/f0d6/f9434d808a08/7f7023c2fc2e/02811352800-p/02811352800-p.jpg?ts=1787230960198","228459982":"d3b8/d81f/970745e99ebe/a1a19a05d5cf/03043335433-p/03043335433-p.jpg?ts=1788441803635","228459983":"15e7/7692/ee8f497980d3/fea93fd0811a/03043335811-p/03043335811-p.jpg?ts=1788446455569","228459984":"0264/1aa6/b77e43959403/a05d5674b86b/03043335800-p/03043335800-p.jpg?ts=1788446454491","228480467":"eca3/2c24/d94542e3b682/4bb6abab45b9/03024053436-p/03024053436-p.jpg?ts=1783525582952","228480468":"73ff/2d12/6d504238b786/df6dcef24d73/03024053800-p/03024053800-p.jpg?ts=1783525582759","228480490":"d921/db41/53e246399919/7460f40d8607/03476273711-p/03476273711-p.jpg?ts=1794471039041","228741270":"936c/47fb/1f17489d8a4d/e2e6400cb012/03031290428-p/03031290428-p.jpg?ts=1785154204424","229089091":"e077/3a55/de024bda9144/4f6d2a0b2f40/03495677892-p/03495677892-p.jpg?ts=1792415819189","229089092":"8c8d/f136/48874ed09662/c33c54734994/03496677507-p/03496677507-p.jpg?ts=1791445447131","229736989":"e514/84a6/07bc40f0b42f/5af1ca23dfc1/01019677606-p/01019677606-p.jpg?ts=1770732283450","229737065":"0170/1bf3/a8044421b64a/cc5b26670990/00995721250-p/00995721250-p.jpg?ts=1777995159798","229737071":"ff5b/8f58/7f674f839915/1378b10935b9/01887231433-p/01887231433-p.jpg?ts=1783068288144","229737114":"80af/e1d5/39f8471587a3/284034edc2f3/01308231428-01-p/01308231428-01-p.jpg?ts=1771945697404","229737220":"4fc2/8b19/46c44ffeb15a/58d4cdcc2efc/01106054250-p/01106054250-p.jpg?ts=1783526910443","229737238":"bbff/5254/b67b4a019e42/25d683bda8c6/00943710800-p/00943710800-p.jpg?ts=1777013254034","229737336":"325c/dae0/0aa94521882e/045c9d53ffa2/00855352428-p/00855352428-p.jpg?ts=1783527409231","229737337":"325c/dae0/0aa94521882e/045c9d53ffa2/00855352428-p/00855352428-p.jpg?ts=1783527409231","229737387":"5e54/bde8/a9c447c8b28a/69338afcc1a6/01011053251-p/01011053251-p.jpg?ts=1779448508787","230144667":"8470/843f/04c741d39ed6/ce9c47a2be20/03222089433-a4o/03222089433-a4o.jpg?ts=1787130409725","230144668":"7fc1/fa31/420e4bb78c99/eb193cce8ee9/03222089800-b/03222089800-b.jpg?ts=1787144629433","230144669":"0b40/1ab8/8f54428fb815/56400513417a/03222089428-s/03222089428-s.jpg?ts=1787049112880","230928382":"5e80/3da1/7c1345579524/13f317cdcc07/03678710711-p/03678710711-p.jpg?ts=1793964750071","231041962":"5e54/bde8/a9c447c8b28a/69338afcc1a6/01011053251-p/01011053251-p.jpg?ts=1779448508787","231378822":"7775/f21a/55de45d9ba02/536cdcdf09e1/03921046400-p/03921046400-p.jpg?ts=1792752874523","231378823":"9df2/06e2/7ea049e2a2c8/ae123f5dc411/03921046800-p/03921046800-p.jpg?ts=1793005529853","231517322":"a48d/0862/3fdd428e96c1/db03883265fe/03440707812-p/03440707812-p.jpg?ts=1791367465924","231799616":"d98a/1dd2/88554bd5b980/14e8675b83c4/03883053811-p/03883053811-p.jpg?ts=1788181270968","231799617":"a706/a911/4e4748968263/f9d200efc3f7/03883053800-p/03883053800-p.jpg?ts=1788181269695","231948413":"e40e/ad7f/2ca04670ae93/abd5e72aa7c4/03587073711-p/03587073711-p.jpg?ts=1788277945975","232248236":"51f1/c98a/82c84d6e898f/4a1f3b1d4ef3/04062046505-p/04062046505-p.jpg?ts=1793113932363","232543378":"9cd9/e3e7/197343e39464/885c9d1d7dcd/03470335800-p/03470335800-p.jpg?ts=1788940007144","232543379":"b42f/1a84/7cfc40bcb3f4/c80172af5e79/03269156433-p/03269156433-p.jpg?ts=1788508207207","232668374":"4d7d/14a4/13cc410ca2fb/7a498f748efe/02341053548-p/02341053548-p.jpg?ts=1788958093815","232962124":"b52d/8094/d4254acfbbb8/cb4fd3f22775/03884054210-p/03884054210-p.jpg?ts=1791546338905","232963438":"2e11/e23a/42324fa39bde/cf2ec5816256/03145710712-p/03145710712-p.jpg?ts=1790147208224","233408547":"5b11/cadb/b226482786a1/844106ccf2a8/02439478529-p/02439478529-p.jpg?ts=1786001022511","233408548":"9af4/65fe/413449edadb5/bca47ea1d0d3/02439478250-p/02439478250-p.jpg?ts=1786091436284","233420888":"6827/917e/e86842979656/522630b129a2/02427190401-p/02427190401-p.jpg?ts=1784726307192","233420889":"013a/0b6d/df0c4288b3c9/0978534b4717/02427190800-p/02427190800-p.jpg?ts=1784726358327","233420890":"50eb/451c/de7a487b9608/dd73974c4d88/02427190812-p/02427190812-p.jpg?ts=1788358970104","233503186":"f651/438d/92324515a732/bc5604118fb7/03570498810-p/03570498810-p.jpg?ts=1788940015452","234324949":"80af/e1d5/39f8471587a3/284034edc2f3/01308231428-01-p/01308231428-01-p.jpg?ts=1771945697404","235814535":"bd95/f6b1/af524c4facc3/60b81c82b12a/04299335401-p/04299335401-p.jpg?ts=1790837823637","237553235":"f42a/d7d8/044a4a769d9f/90d669ebf738/03442335500-p/03442335500-p.jpg?ts=1786091053624","239302884":"a653/45e0/a2684dfc92ad/181f140271b4/04520053401-p/04520053401-p.jpg?ts=1793792085748","239302885":"e79a/c94d/ffd2409083e7/56df37b1c897/04522053401-p/04522053401-p.jpg?ts=1793792084848","240127919":"4242/3d80/e8b6461793f0/50a8d80434c6/03509335711-p/03509335711-p.jpg?ts=1789719714886","240127935":"b918/6708/f77a48fdbd2a/3036635377e1/02986236428-p/02986236428-p.jpg?ts=1783602851304","240128048":"42a4/5da0/39244a96bd9a/38ffafd8cb96/03012073211-p/03012073211-p.jpg?ts=1786091021882","240128113":"d914/ce2a/7a3648149801/772d1dd41e75/02986236811-p/02986236811-p.jpg?ts=1783602880062","242077559":"bc2d/2ab9/d6d347eea2ca/686722d0c778/02579352433-p/02579352433-p.jpg?ts=1783605713904","243093341":"45b4/7248/5b5c4d5d8700/5967d01214b8/02560677122-p/02560677122-p.jpg?ts=1787149216118","243093342":"fe6b/c554/a9e8486c9a17/cde410480ae1/2560677200-p/2560677200-p.jpg?ts=1793964848623","244456112":"224d/cc1d/bc9e41a78a84/fa9a4ecfa748/03380273756-p/03380273756-p.jpg?ts=1789652065381","244572113":"c490/c332/9f5a4c679da3/bcd9adad1307/03145710401-p/03145710401-p.jpg?ts=1790147207486","246887925":"f4a8/8b85/59714789a52d/3c4fad90d049/02582236800-p/02582236800-p.jpg?ts=1787148205827","246888316":"dfcf/24ce/c08e40d3aa46/7084e8ab0764/03102407700-p/03102407700-p.jpg?ts=1792133970778","246888378":"e877/6103/0bb049589f27/a5afccc8f3da/03536677800-p/03536677800-p.jpg?ts=1791967537846","247647136":"e627/59ce/af4e44608444/6c01ed1631a6/02610156800-p/02610156800-p.jpg?ts=1792077460882","251465876":"1a7a/5840/c26545feab96/f075c2e9fc69/03334758446-p/03334758446-p.jpg?ts=1790837827434","229737221":"4fc2/8b19/46c44ffeb15a/58d4cdcc2efc/01106054250-p/01106054250-p.jpg?ts=1783526910443","229737222":"4fc2/8b19/46c44ffeb15a/58d4cdcc2efc/01106054250-p/01106054250-p.jpg?ts=1783526910443","229737218":"4fc2/8b19/46c44ffeb15a/58d4cdcc2efc/01106054250-p/01106054250-p.jpg?ts=1783526910443","229737067":"0170/1bf3/a8044421b64a/cc5b26670990/00995721250-p/00995721250-p.jpg?ts=1777995159798","229737068":"0170/1bf3/a8044421b64a/cc5b26670990/00995721250-p/00995721250-p.jpg?ts=1777995159798","229737069":"0170/1bf3/a8044421b64a/cc5b26670990/00995721250-p/00995721250-p.jpg?ts=1777995159798","230064775":"bbff/5254/b67b4a019e42/25d683bda8c6/00943710800-p/00943710800-p.jpg?ts=1777013254034","230328142":"5e54/bde8/a9c447c8b28a/69338afcc1a6/01011053251-p/01011053251-p.jpg?ts=1779448508787","230329173":"5e54/bde8/a9c447c8b28a/69338afcc1a6/01011053251-p/01011053251-p.jpg?ts=1779448508787"};
+BK.forEach(r=>{const pid=r[5].split('?')[0];const path=BKIMG[pid]||r[4];items.push({id:'bk'+pid,b:'Bershka',n:r[0],c:r[1],p:r[2],o:r[3],img:BKI+path+(path.includes('?')?'&':'?')+'w=750',url:BKU+r[5].replace('?','.html?'),col:(r[5].match(/colorId=(\d+)/)||[])[1]||''});});
+// regroupe les coloris d'un même produit : une seule carte par modèle
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\bjeans\b/g,'jean').replace(/[^a-z0-9]+/g,' ').trim();
+const groups=new Map(),byImg=new Map();
+for(const x of items){
+  const k=x.b+'|'+norm(x.n)+'|'+x.p;
+  const g=groups.get(k)||byImg.get(x.img);
+  if(!g)byImg.set(x.img,x);
+  if(!g){x.v=1;x.imgs=new Set([x.img]);groups.set(k,x);}
+  else{g.v++;g.imgs.add(x.img);}
+}
+const uniq=[...groups.values()];
+items.length=0;items.push(...uniq);
+
+// mélange stable pour alterner les marques
+let seed=7;const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+for(let i=items.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[items[i],items[j]]=[items[j],items[i]];}
+
+const KEY='bf-swipe-2026-v2';
+let st={dec:{},fin:{},hist:[],fb:'all',fc:'all',mode:'cat',tab:'fav',outfits:[],pick:{b:null,h:null}};
+try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&s.dec)st={...st,...s};}catch(e){}
+if(!Array.isArray(st.outfits))st.outfits=[];if(!st.pick)st.pick={b:null,h:null};
+const byId=Object.fromEntries(items.map(x=>[x.id,x]));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}};
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur=n=>n.toFixed(2).replace('.',',')+' €';
+const typ=x=>x.c==='P'?'Pantalon':'Veste';
+
+const F=[['all','Tout'],['Pull&Bear','Pull&Bear'],['Bershka','Bershka']],C=[['all','Tout type'],['P','Pantalons / jeans'],['B','Vestes']];
+function renderFilters(){
+  $('filters').innerHTML=F.map(([v,l])=>`<button class="chip ${st.fb===v?'on':''}" data-fb="${esc(v)}">${esc(l)}</button>`).join('')+C.map(([v,l])=>`<button class="chip ${st.fc===v?'on':''}" data-fc="${v}">${l}</button>`).join('');
+}
+$('filters').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.fb)st.fb=b.dataset.fb;if(b.dataset.fc)st.fc=b.dataset.fc;save();render();});
+
+const favs=()=>items.filter(x=>st.dec[x.id]==='L');
+const keep=()=>favs().filter(x=>st.fin[x.id]==='K');
+const filt=x=>(st.fb==='all'||x.b===st.fb)&&(st.fc==='all'||x.c===st.fc);
+const pool=()=>st.mode==='tri'?favs().filter(filt):items.filter(filt);
+const queue=()=>st.mode==='tri'?pool().filter(x=>!st.fin[x.id]):pool().filter(x=>!st.dec[x.id]);
+
+function cardHTML(x,back){
+  const pct=Math.round((1-x.p/x.o)*100);
+  const tri=st.mode==='tri';
+  return `<div class="card ${back?'back':''}" data-id="${esc(x.id)}">
+    <img src="${esc(x.img)}" alt="${esc(x.n)}" loading="eager" referrerpolicy="no-referrer">
+    <a class="open" href="${esc(x.url)}" target="_blank" rel="noopener" aria-label="Voir sur le site">↗</a>
+    <div class="stamp like">${tri?'GARDER':'FAVORI'}</div><div class="stamp nope">${tri?'RETIRER':'NOPE'}</div>
+    <div class="info"><span class="brand">${esc(x.b)} · ${typ(x)}</span>${x.v>1?`<span class="var">${x.v} coloris sur le site</span>`:''}
+    <div class="name">${esc(x.n)}</div>
+    <div class="price"><b>${eur(x.p)}</b><s>${eur(x.o)}</s><em>-${pct} %</em></div></div></div>`;
+}
+
+function render(){
+  renderFilters();
+  const tri=st.mode==='tri';
+  $('modebar').classList.toggle('on',tri);
+  const q=queue(),all=pool().length,done=all-q.length;
+  $('bar').style.width=(all?done/all*100:0)+'%';
+  $('bar').style.background=tri?'var(--ok)':'var(--red)';
+  $('count').textContent=tri?`${done} / ${all} favoris triés`:`${done} / ${all} vus`;
+  document.querySelector('.meta span:last-child').textContent=tri?'← retirer · garder →':'← passer · favori →';
+  const stage=$('stage');
+  if(!q.length){
+    stage.innerHTML=tri
+      ?`<div class="empty"><div><b>Tri terminé.</b>Ta sélection finale est dans ♥, onglet Sélection.</div></div>`
+      :`<div class="empty"><div><b>Tout vu.</b>${favs().length?'Passe au tri de tes favoris pour garder les meilleurs.':'Change de filtre pour voir le reste.'}${favs().length?'<br><br><button class="cta" id="goTri">Trier mes '+favs().length+' favoris</button>':''}</div></div>`;
+    const g=$('goTri');if(g)g.onclick=startTri;
+  }
+  else{stage.innerHTML=(q[1]?cardHTML(q[1],true):'')+cardHTML(q[0],false);bindTop();}
+  if(q[2]){const i=new Image();i.src=q[2].img;}
+  renderLikes();
+}
+
+function decide(v){
+  const q=queue();if(!q.length)return;
+  const x=q[0];const el=$('stage').querySelector('.card:not(.back)');
+  if(st.mode==='tri')st.fin[x.id]=v==='L'?'K':'X';else st.dec[x.id]=v;
+  st.hist.push([st.mode,x.id]);save();
+  if(el){el.style.transition='transform .28s ease-out,opacity .28s';el.style.transform=`translate(${v==='L'?640:-640}px,40px) rotate(${v==='L'?24:-24}deg)`;el.style.opacity='0';setTimeout(render,230);}else render();
+}
+$('yes').onclick=()=>decide('L');$('no').onclick=()=>decide('N');
+$('undo').onclick=()=>{const h=st.hist.pop();if(!h)return;const [m,id]=Array.isArray(h)?h:['cat',h];
+  if(m==='tri')delete st.fin[id];else{delete st.dec[id];delete st.fin[id];}
+  st.mode=m;save();render();};
+document.addEventListener('keydown',e=>{if($('sheet').classList.contains('on')){if(e.key==='Escape')$('sheet').classList.remove('on');return;}
+  if(e.key==='ArrowRight')decide('L');else if(e.key==='ArrowLeft')decide('N');else if(e.key==='Backspace'||(e.key==='z'&&(e.metaKey||e.ctrlKey)))$('undo').click();});
+
+function startTri(){st.mode='tri';st.tab='sel';save();$('sheet').classList.remove('on');render();}
+$('startTri').onclick=startTri;
+$('exitTri').onclick=()=>{st.mode='cat';save();render();};
+
+function bindTop(){
+  const el=$('stage').querySelector('.card:not(.back)');if(!el)return;
+  const like=el.querySelector('.like'),nope=el.querySelector('.nope');
+  let sx=0,sy=0,dx=0,down=false;
+  el.addEventListener('pointerdown',e=>{if(e.target.closest('.open'))return;down=true;sx=e.clientX;sy=e.clientY;dx=0;el.setPointerCapture(e.pointerId);el.style.transition='none';});
+  el.addEventListener('pointermove',e=>{if(!down)return;dx=e.clientX-sx;const dy=e.clientY-sy;
+    el.style.transform=`translate(${dx}px,${dy*.2}px) rotate(${dx/18}deg)`;like.style.opacity=Math.max(0,Math.min(1,dx/90));nope.style.opacity=Math.max(0,Math.min(1,-dx/90));});
+  const end=()=>{if(!down)return;down=false;
+    if(dx>100)decide('L');else if(dx<-100)decide('N');
+    else{el.style.transition='transform .2s';el.style.transform='';like.style.opacity=0;nope.style.opacity=0;}};
+  el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+  const img=el.querySelector('img');img.onerror=()=>{img.style.objectFit='contain';img.alt='Photo indisponible';};
+}
+
+function row(x,act){return `<div class="row"><img src="${esc(x.img)}" alt="" referrerpolicy="no-referrer">
+    <a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.n)}<small>${esc(x.b)} · ${typ(x)}${x.v>1?' · '+x.v+' coloris':''}</small></a>
+    <div class="p">${eur(x.p)}${act}</div></div>`;}
+
+function renderLikes(){
+  const Fv=favs(),K=keep(),todo=Fv.filter(x=>!st.fin[x.id]).length;
+  const t=K.reduce((s,x)=>s+x.p,0),saved=K.reduce((s,x)=>s+x.o-x.p,0);
+  $('nLikes').textContent=Fv.length;$('tLikes').textContent=K.length?`${K.length} gardés · ${eur(t)}`:'favoris';
+  $('tabs').innerHTML=`<button class="tab ${st.tab==='fav'?'on':''}" data-tab="fav">Favoris ${Fv.length}</button><button class="tab ${st.tab==='sel'?'on':''}" data-tab="sel">Sélection ${K.length}</button><button class="tab ${st.tab==='ens'?'on':''}" data-tab="ens">Ensembles ${st.outfits.length}</button>`;
+  const sel=st.tab==='sel',ens=st.tab==='ens';
+  $('ensbox').innerHTML=ens?ensHTML():'';
+  if(ens){$('sumbox').style.display='none';$('copy').style.display='none';$('startTri').hidden=true;$('list').innerHTML='';return;}
+  $('sumbox').style.display=sel?'':'none';
+  $('copy').style.display=sel?'':'none';
+  $('lc').textContent=`${K.length} pièce${K.length>1?'s':''} · ${eur(saved)} économisés`;
+  $('lt').textContent=eur(t);
+  const over=t>BUDGET;$('bud').className='bud'+(over?' over':'');$('budi').style.width=Math.min(100,t/BUDGET*100)+'%';
+  $('budtxt').textContent=over?`${eur(t-BUDGET)} au-dessus de ton budget de ${BUDGET} €`:`Il te reste ${eur(BUDGET-t)} sur ${BUDGET} €`;
+  const cta=$('startTri');
+  cta.hidden=!(todo>0);cta.textContent=`Trier mes favoris (${todo} à trier)`;
+  if(sel){
+    $('list').innerHTML=K.length?K.map(x=>row(x,`<button data-rm="${esc(x.id)}">Retirer</button>`)).join(''):'<p style="color:var(--mut)">Rien de gardé pour l\'instant. Like des pièces dans le catalogue, puis trie tes favoris.</p>';
+  }else{
+    $('list').innerHTML=Fv.length?Fv.map(x=>{const f=st.fin[x.id];const lab=f==='K'?'<small style="color:var(--ok)">Gardé</small>':f==='X'?'<small>Retiré au tri</small>':'<small>À trier</small>';
+      return row(x,`${lab}<button data-unfav="${esc(x.id)}">Enlever</button>`);}).join(''):'<p style="color:var(--mut)">Pas encore de favori. Swipe à droite ce qui te plaît.</p>';
+  }
+}
+// --- Ensembles bas + haut ---
+// teinte estimée à partir du code couleur Inditex (1er chiffre)
+const FAM={0:'blanc',1:'blanc',2:'écru',3:'jaune',4:'bleu',5:'vert',6:'rouge',7:'marron',8:'noir',9:'gris'};
+const NEUTRE=new Set(['blanc','écru','noir','gris','marron']);
+const fam=x=>{const c=String(x.col||'').padStart(3,'0');return FAM[c[0]]||'?';};
+function harmony(b,h){
+  const fb=fam(b),fh=fam(h);
+  if(fb==='?'||fh==='?')return [1,'À vérifier'];
+  const nb=NEUTRE.has(fb),nh=NEUTRE.has(fh);
+  if(fb===fh&&!(fb==='bleu'))return nb?[2,'Ton sur ton']:[1,'Même couleur, ose ou évite'];
+  if(fb==='bleu'&&fh==='bleu')return [1,'Denim sur denim, à doser'];
+  if(nb&&nh)return [3,'Base neutre, sûr'];
+  if(nb||nh||fb==='bleu'||fh==='bleu')return [3,'Une couleur + une base, ça marche'];
+  return [0,'Deux couleurs fortes, risqué'];
+}
+const tagCls=s=>s>=3?'tag':s===2?'tag':s===1?'tag mid':'tag low';
+const pool2=()=>{const f=favs();return f.length?f:[];};
+function tile(x,role){return `<button class="pk ${st.pick[role]===x.id?'on':''}" data-pk="${role}" data-id="${esc(x.id)}"><img src="${esc(x.img)}" alt="" loading="lazy" referrerpolicy="no-referrer"><span>${esc(x.n)}</span><span>${eur(x.p)}</span></button>`;}
+function ensCard(b,h,actions){const [sc,lab]=harmony(b,h);
+  return `<div class="ens"><div class="duo"><img src="${esc(h.img)}" alt="" referrerpolicy="no-referrer"><img src="${esc(b.img)}" alt="" referrerpolicy="no-referrer"></div>
+  <div class="hd"><span class="${tagCls(sc)}">${esc(lab)}</span><b>${eur(b.p+h.p)}</b></div>
+  <div class="nm">Haut : <a href="${esc(h.url)}" target="_blank" rel="noopener">${esc(h.n)}</a> · ${esc(h.b)}<br>Bas : <a href="${esc(b.url)}" target="_blank" rel="noopener">${esc(b.n)}</a> · ${esc(b.b)}</div>
+  <div class="ebtn">${actions}</div></div>`;}
+function ensHTML(){
+  const F=pool2(),bas=F.filter(x=>x.c==='P'),hauts=F.filter(x=>x.c==='B');
+  if(!bas.length||!hauts.length)return `<p style="color:var(--mut)">Pour composer un ensemble, il te faut au moins un pantalon et une veste en favoris. Tu en as ${bas.length} et ${hauts.length} pour l'instant.</p>`;
+  const B=byId[st.pick.b],H=byId[st.pick.h];
+  let h=`<div class="sec">Composer</div><div class="sub">Choisis un haut et un bas parmi tes favoris.</div>
+  <div class="sub">Hauts</div><div class="sc">${hauts.map(x=>tile(x,'h')).join('')}</div>
+  <div class="sub" style="margin-top:8px">Bas</div><div class="sc">${bas.map(x=>tile(x,'b')).join('')}</div>`;
+  if(B&&H)h+=ensCard(B,H,`<button class="go" data-save="${esc(B.id)}|${esc(H.id)}">Enregistrer l'ensemble</button>`);
+  else h+=`<div class="duo"><div class="ph">${H?'':'Choisis un haut'}</div><div class="ph">${B?'':'Choisis un bas'}</div></div>`;
+  // suggestions
+  const saved=new Set(st.outfits.map(o=>o.join('|')));
+  const sug=[];for(const b of bas)for(const x of hauts){const k=b.id+'|'+x.id;if(saved.has(k))continue;sug.push([harmony(b,x)[0],b.p+x.p,b,x]);}
+  sug.sort((a,c)=>c[0]-a[0]||a[1]-c[1]);
+  if(sug.length)h+=`<div class="sec">Suggestions</div><div class="sub">Les associations les plus sûres parmi tes favoris, les moins chères d'abord. Les teintes sont estimées d'après le code couleur des sites : regarde quand même les photos.</div>`+sug.slice(0,6).map(([,,b,x])=>ensCard(b,x,`<button class="go" data-save="${esc(b.id)}|${esc(x.id)}">Enregistrer</button>`)).join('');
+  // enregistrés
+  h+=`<div class="sec">Mes ensembles</div>`;
+  const O=st.outfits.map(o=>[byId[o[0]],byId[o[1]]]).filter(o=>o[0]&&o[1]);
+  h+=O.length?O.map(([b,x],i)=>{const inSel=st.fin[b.id]==='K'&&st.fin[x.id]==='K';
+    return ensCard(b,x,`${inSel?'<span class="tag">Dans ta sélection</span>':`<button class="go" data-keep="${i}">Mettre les 2 pièces dans ma sélection</button>`}<button data-del="${i}">Supprimer</button>`);}).join(''):'<p style="color:var(--mut)">Aucun ensemble enregistré.</p>';
+  return h;
+}
+$('ensbox').addEventListener('click',e=>{const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+  if(d.pk){st.pick[d.pk]=st.pick[d.pk]===d.id?null:d.id;}
+  else if(d.save){const [b,h]=d.save.split('|');if(!st.outfits.some(o=>o[0]===b&&o[1]===h))st.outfits.push([b,h]);st.pick={b:null,h:null};}
+  else if(d.keep!=null&&d.keep!==''){const o=st.outfits[+d.keep];if(o){st.fin[o[0]]='K';st.fin[o[1]]='K';}}
+  else if(d.del!=null&&d.del!==''){st.outfits.splice(+d.del,1);}
+  else return;
+  const y=$('sheet').querySelector('.panel').scrollTop;save();render();$('sheet').querySelector('.panel').scrollTop=y;});
+
+$('tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;st.tab=t.dataset.tab;save();renderLikes();});
+$('list').addEventListener('click',e=>{const d=e.target.dataset||{};
+  if(d.rm){st.fin[d.rm]='X';save();render();}
+  if(d.unfav){st.dec[d.unfav]='N';delete st.fin[d.unfav];st.outfits=st.outfits.filter(o=>!o.includes(d.unfav));save();render();}});
+$('openLikes').onclick=()=>{renderLikes();$('sheet').classList.add('on');};
+$('closeLikes').onclick=()=>$('sheet').classList.remove('on');
+$('sheet').addEventListener('click',e=>{if(e.target.id==='sheet')$('sheet').classList.remove('on');});
+$('copy').onclick=async()=>{const K=keep();const txt=K.map(x=>`${x.b} – ${x.n} – ${eur(x.p)}\n${x.url}`).join('\n\n')+`\n\nTotal : ${eur(K.reduce((s,x)=>s+x.p,0))}`;
+  try{await navigator.clipboard.writeText(txt);$('copy').textContent='Copié';}catch(e){$('copy').textContent='Copie impossible';}setTimeout(()=>$('copy').textContent='Copier la sélection',1500);};
+$('reset').onclick=()=>{if($('reset').dataset.c){st.dec={};st.fin={};st.hist=[];st.mode='cat';st.outfits=[];st.pick={b:null,h:null};save();render();$('reset').textContent='Tout recommencer';delete $('reset').dataset.c;}else{$('reset').dataset.c=1;$('reset').textContent='Sûr ? Touche encore';}};
+
+render();
+}
+</script>
+</body>
+</html>
